@@ -1,7 +1,7 @@
 {
   "name": "crossman",
   "description": "crossman is javascript library to croose browser",
-  "main": "",
+  "main": "dist/crossman.js",
   "authors": [
     "SJ <souljungkim@gmail.com>"
   ],
@@ -12,13 +12,12 @@
     "browsing"
   ],
   "homepage": "https://github.com/souljungkim/crossman",
-  "private": true,
   "ignore": [
     "**/.*",
     "node_modules",
     "bower_components",
     "bower.json",
-    "gruntfile.js",
+    "gulpfile.js",
     "package.json",
     "src",
     "test",
