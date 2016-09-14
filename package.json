@@ -1,0 +1,33 @@
+{
+  "name": "crossman",
+  "version": "1.0.0",
+  "description": "crossman is javascript library to cross browser",
+  "main": "",
+  "author": "souljungkim@gmail.com",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/souljungkim/crossman.git",
+    "web": "https://github.com/souljungkim/crossman"
+  },
+  "devDependencies": {
+    "del": "^2.2.0",
+    "gulp": "^3.9.0",
+    "gulp-bower": "0.0.13",
+    "gulp-concat": "^2.6.0",
+    "gulp-concat-css": "^2.2.0",
+    "gulp-csslint": "^0.2.0",
+    "gulp-if": "^2.0.0",
+    "gulp-jshint": "^2.0.1",
+    "gulp-livereload": "^3.8.1",
+    "gulp-minify-html": "^1.0.5",
+    "gulp-rename": "^1.2.2",
+    "gulp-sass": "^2.1.1",
+    "gulp-shell": "^0.5.2",
+    "gulp-strip-debug": "^1.1.0",
+    "gulp-uglify": "^1.5.1",
+    "gulp-uglifycss": "^1.0.5",
+    "gulp-webserver": "^0.9.1",
+    "jshint": "^2.9.3"
+  }
+}
