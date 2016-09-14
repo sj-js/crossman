@@ -12,6 +12,8 @@ window.getNewEl = function(elNm, id, classNm, attrs, inner, eventNm, eventFunc){
     return newEl;                               // 반환 
 };
 
+
+
 window.getEl = function(id){
 
     var querySelectorAll = function(selector){
@@ -188,3 +190,91 @@ window.getEl = function(id){
 
     return this;
 };
+
+
+
+
+
+
+// http://paulirish.com/2011/requestanimationframe-for-smart-animating/
+// http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
+ 
+// requestAnimationFrame polyfill by Erik Möller
+// fixes from Paul Irish and Tino Zijdel 
+(function() {
+    var lastTime = 0;
+    var vendors = ['ms', 'moz', 'webkit', 'o'];
+    for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+        window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+        window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame']
+                                   || window[vendors[x]+'CancelRequestAnimationFrame'];
+    }
+ 
+    if (!window.requestAnimationFrame)
+        window.requestAnimationFrame = function(callback, element) {
+            var currTime = new Date().getTime();
+            var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+            var id = window.setTimeout(function(){ 
+                callback(currTime + timeToCall); 
+            }, timeToCall);
+            lastTime = currTime + timeToCall;
+            return id;
+        };
+ 
+    if (!window.cancelAnimationFrame)
+        window.cancelAnimationFrame = function(id) {
+            clearTimeout(id);
+        };
+}());
+
+
+
+/**************/
+/* 파일  객체 */
+/**************/
+(function(){
+    window.URL = window.URL || window.webkitURL;
+    window.BlobBuilder = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder;
+}());
+
+
+
+/**************/
+/* EVENT 객체 */
+/**************/
+(function(){
+    /* FireFox는 이 작업을 선행하게 하여 window.event객체를 전역으로 돌려야한다.*/
+    if (navigator.userAgent.indexOf('Firefox') != -1){  
+        window.addEventListener(eventNm, function(e){window.event=e;}, true);
+    }
+    if (!window.addEventListener && window.attachEvent){
+        window.addEventListener = function(eventNm, fn){
+            window.attachEvent('on'+eventNm, function(event){ 
+                if (!event.target && event.srcElement) event.target = event.srcElement;
+                if (!event.preventDefault) event.preventDefault = function(){};
+                if (!event.stopPropagation){
+                    event.stopPropagation = function(){
+                        event.returnValue = false; 
+                        event.cancelBubble = true;
+                    };
+                }
+                fn(event); 
+            });         
+        }   
+    }
+}());
+
+
+/******************/
+/* 필수 구현 객체 */
+/******************/
+(function(){
+    if (!Array.prototype.indexOf){
+        Array.prototype.indexOf = function(obj){
+            for (var i=0; i<this.length; i++){
+                if (this[i] == obj) return i;
+            }
+            return -1;
+        }
+    }
+}());
