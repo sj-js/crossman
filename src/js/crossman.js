@@ -195,8 +195,8 @@ window.getEl = function(id){
         }       
         return null;
     };
-    this.getSuperAttr = function(attrNm){
-        var searchSuperObj;
+    this.getParentEl = function(attrNm){
+        var searchSuperObj = el;
         while(searchSuperObj){
             if (searchSuperObj.getAttribute(attrNm) != undefined) break;
             searchSuperObj = searchSuperObj.parentNode;
