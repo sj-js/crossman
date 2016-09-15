@@ -166,6 +166,14 @@ window.getEl = function(id){
         el.scrollTop = el.scrollHeight;
         return this;
     };
+    this.disableSelection = function(){
+        if (typeof el.ondragstart != 'undefined') el.ondragstart = function(){return false;};
+        if (typeof el.onselectstart != 'undefined') el.onselectstart = function(){return false;};
+        if (typeof el.oncontextmenu != 'undefined') el.oncontextmenu = function(){return false;};
+        /* 파이어폭스에서 드래그 선택 금지 */
+        if (typeof el.style.MozUserSelect != 'undefined') document.body.style.MozUserSelect = 'none';
+        return this;
+    };
     this.hideDiv = function(){          
         el.style.display = 'block';
         el.style.position = 'absolute';
@@ -180,12 +188,20 @@ window.getEl = function(id){
         el.style.top = '0px';       
         return this;        
     };
-    this.getNewSeqId = function (idStr){        
+    this.getNewSeqId = function(idStr){        
         for (var seq=1; seq < 50000; seq++){
             var searchEmptyId = idStr + seq
             if (!(searchEmptyId in el)) return searchEmptyId;
         }       
         return null;
+    };
+    this.getSuperAttr = function(attrNm){
+        var searchSuperObj;
+        while(searchSuperObj){
+            if (searchSuperObj.getAttribute(attrNm) != undefined) break;
+            searchSuperObj = searchSuperObj.parentNode;
+        }
+        return searchSuperObj;
     };
 
     return this;
@@ -278,3 +294,34 @@ window.getEl = function(id){
         }
     }
 }());
+
+
+
+(function(){
+    if (!document.querySelectorAll){
+        if(document.getElementsByTagName){
+            document.querySelectorAll = function(){
+                /* Attribute */         
+                var startIdx = selector.indexOf('[');
+                var endIdx = selector.indexOf(']');
+                var attr;
+                var selectedList = [];
+                if (startIdx != -1 && endIdx != -1){
+                    attr = selector.substring(startIdx +1, endIdx);
+                    /* 유효성검사에 맞는 Form 태그 들만 */
+                    var nodeNames = ['div', 'span', 'form', 'input', 'select', 'textarea'];
+                    for (var searchI=0; searchI< nodeNames.length; searchI++){
+                        var elements = document.getElementsByTagName(nodeNames[searchI]);                   
+                        for (var searchJ=0; searchJ<elements.length; searchJ++){                        
+                            if (elements[searchJ].getAttribute(attr) != undefined){
+                                selectedList.push(elements[searchJ]);
+                            }
+                        }
+                    }
+                }
+                return selectedList;        
+            };
+        }
+    }    
+}());
+
