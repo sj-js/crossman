@@ -216,28 +216,30 @@ window.getEl = function(id){
 
 
 window.getData = function(obj){
-    
+  
     var obj = obj;
 
     this.parse = function(){
-        var startStr = '';
-        var endStr = '';
-        if (typeof obj == 'string'){
-            if (startStr == '{' && endStr == '}'){
-                return JSON.parse(obj);
+        if (obj){
+            var startStr = obj.substr(0, 1);
+            var endStr = obj.substr(obj.length-1, 1);
+            if (typeof obj == 'string'){
+                if (startStr == '{' && endStr == '}'){
+                    return JSON.parse(obj);
 
-            }else if (startStr == '[' && endStr == ']'){
-                return JSON.parse(obj);
+                }else if (startStr == '[' && endStr == ']'){
+                    return JSON.parse(obj);
 
-            }else if (obj.indexOf(',' != -1)){
-                var list = obj.split(',');
-                for (var i=0; i<list.length; i++){
-                    list[i] = list[i].trim();
+                }else if (obj.indexOf(',') != -1){
+                    var list = obj.split(',');
+                    for (var i=0; i<list.length; i++){
+                        list[i] = list[i].trim();
+                    }
+                    return list;
                 }
-                return list;
             }
-        }
-        return obj;
+            return obj;
+        }        
     };
 
     return this;
