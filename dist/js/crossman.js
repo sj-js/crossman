@@ -177,6 +177,114 @@ window.getEl = function(id){
         }       
         return null;
     };
+
+
+
+
+
+    
+    this.isAccepted = function(acceptObj, rejectObj){    
+        var isOk = false;    
+        if (acceptObj){
+            if (this.find(acceptObj)){
+                isOk = true;
+            }
+        }else{
+            isOk = true;
+        }
+        if (rejectObj){
+            if (this.find(rejectObj)){
+                isOk = false;
+            }
+        }
+        return isOk;
+    };
+    this.find = function(param){    
+        if (el instanceof Array){
+            var results = [];
+            for (var i=0; i<el.length; i++){            
+                var matchedObj = this.getMatchedObjWithParam(el[i], param);
+                if (matchedObj) 
+                    results.push(matchedObj);
+            }        
+            return results;
+        }
+        if (el instanceof Object){ 
+            var matchedObj = this.getMatchedObjWithParam(el, param);
+            return matchedObj;
+        }        
+    };
+
+    // Param==Array => Or조건
+    // Param==Object => 해당조건
+    this.getMatchedObjWithParam = function(obj, param){
+        if (typeof param == 'string'){        
+            param = {id:param};
+        }
+        if (param instanceof Array){        
+            for (var i=0; i<param.length; i++){            
+                if (this.find(param[i])) return obj;
+            }
+            return;
+        }
+        if (param instanceof Object){        
+            var keys = Object.keys(param);        
+            for (var i=0; i<keys.length; i++){
+                var key = keys[i];
+                if ( !(obj[key] && obj[key] == param[key]) ){
+                    return;
+                }
+            }              
+            return obj;
+        }    
+    };
+
+    // Find HTMLDOMElement 
+    this.findDomDataAttribute = function(param){    
+        if (el instanceof Array){
+            var results = [];
+            for (var i=0; i<el.length; i++){            
+                var matchedObj = this.getMatchedDomWithParam(el[i], param);
+                if (matchedObj) 
+                    results.push(matchedObj);
+            }        
+            return results;
+        }
+        if (el instanceof Object){ 
+            var matchedObj = this.getMatchedDomWithParam(el, param);
+            return matchedObj;
+        }        
+    };    
+
+    // Param==Array => Or조건
+    // Param==Object => 해당조건
+    this.getMatchedDomWithParam = function(obj, param){
+        if (typeof param == 'string'){        
+            param = {id:param};
+        }
+        if (param instanceof Array){        
+            for (var i=0; i<param.length; i++){            
+                if (this.findDomDataAttribute(param[i])) return obj;
+            }
+            return;
+        }
+        if (param instanceof Object){        
+            var keys = Object.keys(param);
+            var domAttrPrefix = "data-";
+            for (var i=0; i<keys.length; i++){
+                var key = keys[i];
+                if ( !(obj.getAttribute(domAttrPrefix+key) && obj.getAttribute(domAttrPrefix+key) == param[key]) ){
+                    return;
+                }
+            }              
+            return obj;
+        }    
+    };
+
+
+
+
+
     this.getParentEl = function(attrNm){
         var searchSuperObj = el;
         while(searchSuperObj){
