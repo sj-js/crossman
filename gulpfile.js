@@ -85,7 +85,7 @@ gulp.task('css', function(){
 	return gulp.src(paths.src.css)
 			.pipe(csslint())
 			.pipe(csslint.reporter())
-			.pipe(concatcss(package.name))
+			.pipe(concatcss(package.name +'.css'))
 			.pipe(gulp.dest(paths.dest.css))
 			.pipe(uglifycss())
 			.pipe(rename({suffix:fileSuffix}))
