@@ -316,6 +316,84 @@ window.getEl = function(id){
         }       
         return foundEl;
     };
+
+
+
+    /*****
+     * 문서의 스크롤된 수치 반환
+     * IE8 : document.documentElement.scrollLeft 
+     * IE9 : window.pageXOffset 
+     * IE11 & others : document.body.scrollLeft 
+     *****/
+    this.getBodyScrollX = function(event){    
+        var bodyPageX = 0;
+        if (document.documentElement && document.documentElement.scrollLeft) bodyPageX = document.documentElement.scrollLeft;
+        if (window.pageXOffset) bodyPageY = window.pageXOffset;
+        if (document.body && document.body.scrollLeft) bodyPageX = document.body.scrollLeft;
+        return bodyPageX;
+    };
+    this.getBodyScrollY = function(event){    
+        var bodyPageY = 0;
+        if (document.documentElement && document.documentElement.scrollTop) bodyPageY = document.documentElement.scrollTop;
+        if (window.pageYOffset) bodyPageY = window.pageYOffset;
+        if (document.body && document.body.scrollTop) bodyPageY = document.body.scrollTop;
+        return bodyPageY;
+    };
+    /*****
+     * 문서의 크기
+     * IE구버전 : document.documentElement.offsetWidth 
+     * IE11 & others : document.body.offsetWidth 
+     *****/
+    this.getBodyOffsetX = function(event){    
+        var bodyOffsetX = 0;
+        if (document.documentElement && document.documentElement.offsetWidth) return document.documentElement.offsetWidth;
+        if (document.body && document.body.offsetWidth) return document.body.offsetWidth;
+        return bodyOffsetX;
+    };
+    this.getBodyOffsetY = function(event){
+        var bodyOffsetY = 0;
+        if (document.documentElement && document.documentElement.offsetHeight) return document.documentElement.offsetHeight;
+        if (document.body && document.body.offsetHeight) return document.body.offsetHeight;
+        return bodyOffsetY;
+    };
+    /* 눈에 보이는 좌표 값 (객체마다  DOM TREE구조와 position의 영향을 받기 때문에, 다른 계산이 필요하여 만든 함수)
+     * 재료는 DOM객체 */
+    this.getBoundingClientRect = function(){
+        if (el.getBoundingClientRect)
+            return el.getBoundingClientRect();
+        var sumOffsetLeft = 0;
+        var sumOffsetTop = 0;
+        var thisObj = el;
+        var parentObj = el.parentNode;
+        while(parentObj){
+            var scrollX = 0;
+            var scrollY = 0;
+            if (thisObj != document.body){
+                scrollX = thisObj.scrollLeft;
+                scrollY = thisObj.scrollTop;
+            }
+            if (parentObj.style){
+                if (parentObj.style.position == 'absolute') {
+                    sumOffsetLeft += thisObj.offsetLeft - scrollX;
+                    sumOffsetTop += thisObj.offsetTop - scrollY;
+                }else if(parentObj.style.position == 'fixed' || thisObj.style.position == 'fixed'){
+                    sumOffsetLeft += thisObj.offsetLeft + this.getBodyScrollX();
+                    sumOffsetTop += thisObj.offsetTop + this.getBodyScrollY();
+                    break;
+                }else{
+                    sumOffsetLeft += (thisObj.offsetLeft - parentObj.offsetLeft) - scrollX;
+                    sumOffsetTop += (thisObj.offsetTop - parentObj.offsetTop) - scrollY;
+                }
+            }else{
+                break;
+            }
+            thisObj = parentObj;
+            parentObj = parentObj.parentNode;
+        }
+        var objBodyOffset = {left:sumOffsetLeft, top:sumOffsetTop, width:el.offsetWidth, height:el.offsetHeight};
+        return objBodyOffset;
+    };
+
     return this;
 };
 
@@ -349,6 +427,30 @@ window.getData = function(obj){
             return obj;
         }        
     };
+    this.findHighestZIndex = function(tagName){
+        var highestIndex = 0;
+        //Makes parameter array
+        if (!tagName){
+            tagName = ['div'];
+        }else if (typeof tagName == 'string'){
+            tagName = [tagName];
+        }
+        //Search
+        if (tagName instanceof Array){        
+            for (var i=0; i<tagName.length; i++){
+                var elementList = document.getElementsByTagName(tagName[0]);            
+                for (var i=0; i<elementList.length; i++){
+                    var zIndex = document.defaultView.getComputedStyle(elementList[i], null).getPropertyValue("z-index");
+                    if (zIndex > highestIndex && zIndex != 'auto'){
+                        highestIndex = zIndex;
+                    }
+                }    
+            }    
+        }else{
+            console.log('Could not get highest z-index. because, not good parameter', tagName);
+        }
+        return parseInt(highestIndex);
+    };    
 
     return this;
 };
