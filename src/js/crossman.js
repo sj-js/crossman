@@ -43,10 +43,14 @@ window.getEl = function(id){
             }
             return selectedList;        
         }
-    };  
-    
-    
-    var el = (typeof id == 'object') ? id : document.getElementById(id);    
+    };
+
+    var el
+    if (id != null)
+        el = (typeof id == 'object') ? id : document.getElementById(id);
+    else
+        el = document;
+
     // var el = (typeof id == 'object') ? id : querySelectorAll(id);    
     this.obj = el;  
 
@@ -223,57 +227,80 @@ window.getEl = function(id){
         }
         if (param instanceof Array){        
             for (var i=0; i<param.length; i++){            
-                if (this.find(param[i])) return obj;
+                if (this.find(param[i]))
+                    return obj;
             }
-            return;
+            return; //No Matching
         }
         if (param instanceof Object){        
             var keys = Object.keys(param);        
             for (var i=0; i<keys.length; i++){
                 var key = keys[i];
-                if ( !(obj[key] && obj[key] == param[key]) ){
-                    return;
+                var attributeValue = obj[key];
+                var conditionValue = param[key];
+                if ( attributeValue && (attributeValue == conditionValue || this.checkMatchingWithExpression(attributeValue, conditionValue)) ){
+                }else{
+                    return; //No Matching
                 }
-            }              
+            }
             return obj;
         }    
     };
+    this.checkMatchingWithExpression = function(value, condition){
+        var result;
+        if (value && condition){
+            var tempCondition;
+            var exclamationFlag;
+            exclamationFlag = (condition.indexOf('!') == 0);
+            tempCondition = condition.substr( (exclamationFlag)?1:0 );
+            tempCondition = tempCondition.replace('.', '[.]');
+            var splitCondition = tempCondition.split("*");
+            var regExpCondition = splitCondition.join('.*');
+            regExpCondition = "^" + regExpCondition + "$"
+            result = new RegExp(regExpCondition).test(value);
+            result = (exclamationFlag) ? !result : result;
+        }
+        return result;
+    }
+
+
 
     // Find HTMLDOMElement 
-    this.findDomDataAttribute = function(param){    
+    this.findDomAttribute = function(param){
         if (el instanceof Array){
             var results = [];
             for (var i=0; i<el.length; i++){            
-                var matchedObj = this.getMatchedDomWithParam(el[i], param);
+                var matchedObj = this.getMatchedDomAttributeWithParam(el[i], param);
                 if (matchedObj) 
                     results.push(matchedObj);
             }        
             return results;
         }
         if (el instanceof Object){ 
-            var matchedObj = this.getMatchedDomWithParam(el, param);
+            var matchedObj = this.getMatchedDomAttributeWithParam(el, param);
             return matchedObj;
         }        
     };    
 
     // Param==Array => Or조건
     // Param==Object => 해당조건
-    this.getMatchedDomWithParam = function(obj, param){
+    this.getMatchedDomAttributeWithParam = function(obj, param){
         if (typeof param == 'string'){        
             param = {id:param};
         }
         if (param instanceof Array){        
             for (var i=0; i<param.length; i++){            
-                if (this.findDomDataAttribute(param[i])) return obj;
+                if (this.findDomAttribute(param[i])) return obj;
             }
             return;
         }
         if (param instanceof Object){        
             var keys = Object.keys(param);
-            var domAttrPrefix = "data-";
+//            var domAttrPrefix = "data-";
             for (var i=0; i<keys.length; i++){
                 var key = keys[i];
-                if ( !(obj.getAttribute(domAttrPrefix+key) && obj.getAttribute(domAttrPrefix+key) == param[key]) ){
+//                if ( !(obj.getAttribute(domAttrPrefix + key) && obj.getAttribute(domAttrPrefix + key) == param[key]) ){
+                if ( !(obj.getAttribute(key) && obj.getAttribute(key) == param[key]) ){
                     return;
                 }
             }              
@@ -394,6 +421,23 @@ window.getEl = function(id){
         return objBodyOffset;
     };
 
+    this.ready = function(afterLoadFunc){
+        if (document.readyState == 'complete' || document.readyState == 'interactive'){
+            afterLoadFunc();
+        }else{
+            window.addEventListener('load', afterLoadFunc);
+        }
+    };
+
+    this.resize = function(funcToAdd){
+        var oldFunc = window.onresize;
+        window.onresize = function(){
+            if (oldFunc)
+                oldFunc();
+            funcToAdd();
+        };
+    };
+
     return this;
 };
 
@@ -427,6 +471,7 @@ window.getData = function(obj){
             return obj;
         }        
     };
+
     this.findHighestZIndex = function(tagName){
         var highestIndex = 0;
         //Makes parameter array
@@ -450,7 +495,13 @@ window.getData = function(obj){
             console.log('Could not get highest z-index. because, not good parameter', tagName);
         }
         return parseInt(highestIndex);
-    };    
+    };
+
+    this.getContextPath = function(){
+        var offset=location.href.indexOf(location.host)+location.host.length;
+        var ctxPath=location.href.substring(offset,location.href.indexOf('/',offset+1));
+        return ctxPath;
+    };
 
     return this;
 };

@@ -1,7 +1,6 @@
-//////////////////////////////////////////////////
-///// Load gulp functions
-//////////////////////////////////////////////////
-// Load Plugin
+/***************************
+ * Load Gulp Plugin
+ *************************/
 var gulp = require('gulp');
 var package = require('./package.json');
 // Bower
@@ -17,7 +16,7 @@ var uglifycss = require('gulp-uglifycss');
 // plugin for html
 var minifyhtml = require('gulp-minify-html');
 // plugin
-var del = require('del');
+var clean = require('gulp-clean');
 var stripDebug = require('gulp-strip-debug');
 var rename = require('gulp-rename');
 var gulpif = require('gulp-if');
@@ -27,24 +26,16 @@ var shell = require('gulp-shell');
 
 
 
-//////////////////////////////////////////////////
-///// Set Path
-//////////////////////////////////////////////////
+/***************************
+ * Set Path
+ *************************/
 var src = 'src';
 var dest = 'dist';
 var fileSuffix = '.min';
 var paths = {
 	"src":{
-		"js"	: [	
-					src+'/bower_components/**/*.js'
-					,src+'/lib/**/*.js'
-					,src+'/js/**/*.js'
-		],		
-		"css"	: [
-					src+'/bower_components/**/*.css'
-					,src+'/lib/**/*.css'
-					,src+'/css/**/*.css'
-		],	
+		"js"	: [src+'/lib/**/*.js', src+'/js/**/*.js'],
+		"css"	: [src+'/lib/**/*.css', src+'/css/**/*.css'],
 		"res"	: src+'/res/**/*',
 		"html"	: src+'/**/*.html'
 	},
@@ -58,55 +49,68 @@ var paths = {
 
 
 
-//////////////////////////////////////////////////
-///// Set Task
-//////////////////////////////////////////////////
-
-// clean
-gulp.task('clean', function(){
-	del([dest]);
+/***************************
+ * Set Task
+ *************************/
+/** clean **/
+gulp.task('clean-js', function(){
+    return gulp.src(paths.dest.js)
+        .pipe(clean());
+});
+gulp.task('clean-css', function(){
+    return gulp.src(paths.dest.css)
+        .pipe(clean());
+});
+gulp.task('clean-html', function(){
+    return gulp.src(paths.dest.html)
+        .pipe(clean());
+});
+gulp.task('clean-res', function(){
+    return gulp.src(paths.dest.res)
+        .pipe(clean());
 });
 
-// js
-gulp.task('js', function(){	
-	return gulp.src(paths.src['js'])
-			.pipe(jshint())
-			.pipe(jshint.reporter('default'))
-			.pipe(concat(package.name +'.js'))
-			.pipe(gulp.dest(paths.dest.js))
-			.pipe(stripDebug())
-			.pipe(uglify({mangle:{toplevel:true}}))
-			.pipe(rename({suffix:fileSuffix}))
-			.pipe(gulp.dest(paths.dest.js));
+/** js **/
+gulp.task('js', ['clean-js'], function(){
+    return gulp.src(paths.src.js)
+        .pipe(jshint())
+        .pipe(jshint.reporter('default'))
+        .pipe(concat(package.name +'.js'))
+        .pipe(gulp.dest(paths.dest.js))
+        .pipe(stripDebug())
+        .pipe(uglify({mangle:{toplevel:true}}))
+        .pipe(rename({suffix:fileSuffix}))
+        .pipe(gulp.dest(paths.dest.js));
 });
 
-// css
-gulp.task('css', function(){
-	return gulp.src(paths.src.css)
-			.pipe(csslint())
-			.pipe(csslint.reporter())
-			.pipe(concatcss(package.name +'.css'))
-			.pipe(gulp.dest(paths.dest.css))
-			.pipe(uglifycss())
-			.pipe(rename({suffix:fileSuffix}))
-			.pipe(gulp.dest(paths.dest.css));
+/** css **/
+gulp.task('css', ['clean-css'], function(){
+    return gulp.src(paths.src.css)
+        .pipe(csslint())
+        .pipe(csslint.reporter())
+        .pipe(concatcss(package.name +'.css'))
+        .pipe(gulp.dest(paths.dest.css))
+        .pipe(uglifycss())
+        .pipe(rename({suffix:fileSuffix}))
+        .pipe(gulp.dest(paths.dest.css));
 });
 
-// res
-gulp.task('res', function(){
-	return gulp.src(paths.src.res)		
-			.pipe(gulp.dest(paths.dest.res));
+/** res **/
+gulp.task('res', ['clean-res'], function(){
+    return gulp.src(paths.src.res)
+        .pipe(gulp.dest(paths.dest.res));
 });
 
-// html
-gulp.task('html', function(){
-	return gulp.src(paths.src.html)
-			.pipe(minifyhtml())		
-			.pipe(gulp.dest(paths.dest.html));
+/** html **/
+gulp.task('html', ['clean-html'], function(){
+    return gulp.src(paths.src.html)
+        .pipe(minifyhtml())
+        .pipe(gulp.dest(paths.dest.html));
 });
 
 
 
+/** server **/
 // 웹서버를 localhost:8000 로 실행한다.
 gulp.task('server', function(){
 	return gulp.src(dest + '/')
@@ -114,6 +118,8 @@ gulp.task('server', function(){
 });
 
 
+
+/** watch **/
 // 파일 변경 감지 및 브라우저 재시작
 gulp.task('watch', function () {
 	livereload.listen();
@@ -130,12 +136,14 @@ gulp.task('watch', function () {
 });
 
 
-// Bower
+/** bower **/
 gulp.task('bower', function(){
 	return bower();
 });
 
 
+
+/** shell **/
 // 마지막으로 원하는 쉘을 실행!
 gulp.task('shell', shell.task([
 	'echo "Lets Start Development"', 	
@@ -150,6 +158,6 @@ gulp.task('run', shell.task([
 
 //기본 task 설정
 gulp.task('default.bak', ['server','js','css','res','html','watch', 'shell']);
-gulp.task('build', ['clean','js','css','res','html']);
+gulp.task('build', ['js','css','res','html']);
 gulp.task('default', ['run','build','watch']);
 gulp.task('dev', ['js','css','res','html','watch']);
