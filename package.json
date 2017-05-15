@@ -11,7 +11,6 @@
     "web": "https://github.com/souljungkim/crossman"
   },
   "devDependencies": {
-    "del": "^2.2.0",
     "gulp": "^3.9.0",
     "gulp-bower": "0.0.13",
     "gulp-clean": "^0.3.2",
