@@ -1,21 +1,42 @@
-/*************************
- * getEl
- * do cross browsing
- *************************/
-window.getNewEl = function(elNm, id, classNm, attrs, inner, eventNm, eventFunc){  
-    var newEl = document.createElement(elNm);   // HTML객체 생성
-    if (id) newEl.id = id;                              // 아이디  
-    if (classNm) newEl.setAttribute('class', classNm);      // 클래스 
-    for (var attrNm in attrs){ newEl.setAttribute(attrNm, attrs[attrNm]); } // 속성   
-    if (inner) newEl.innerHTML = inner;         // 안 값  
-    if (eventNm) getEl(newEl).addEventListener(eventNm, function(event){ eventFunc(event); });  // 이벤트
-    return newEl;                               // 반환 
+/***************************************************************************
+ *
+ * newElement
+ *
+ ***************************************************************************/
+// window.newEl = function(elNm, id, classNm, attrs, inner, eventNm, eventFunc){
+window.newEl = function(elNm, attributes, inner, eventNm, eventFunc){
+    var newElement = document.createElement(elNm);   // HTML객체 생성
+    // // 아이디
+    // if (id)
+    //     newElement.id = id;
+    // // 클래스
+    // if (classNm)
+    //     newElement.setAttribute('class', classNm);
+    // 속성
+    for (var attrNm in attributes){
+        newElement.setAttribute(attrNm, attributes[attrNm]);
+    }
+    // 내용
+    if (inner)
+        newElement.innerHTML = inner;
+    // 이벤트
+    if (eventNm){
+        getEl(newElement).addEventListener(eventNm, function(event){
+            eventFunc(event);
+        });
+    }
+    return newElement;
 };
 
 
 
 
-
+/***************************************************************************
+ *
+ * getElement
+ *  - do cross browsing
+ *
+ ***************************************************************************/
 window.getEl = function(id){
 
     var querySelectorAll = function(selector){
@@ -299,9 +320,12 @@ window.getEl = function(id){
 //            var domAttrPrefix = "data-";
             for (var i=0; i<keys.length; i++){
                 var key = keys[i];
+                var attributeValue = obj.getAttribute(key);
+                var conditionValue = param[key];
 //                if ( !(obj.getAttribute(domAttrPrefix + key) && obj.getAttribute(domAttrPrefix + key) == param[key]) ){
-                if ( !(obj.getAttribute(key) && obj.getAttribute(key) == param[key]) ){
-                    return;
+                if ( attributeValue && attributeValue == conditionValue || this.checkMatchingWithExpression(attributeValue, conditionValue)){
+                }else{
+                    return; //No Matching
                 }
             }              
             return obj;
@@ -444,7 +468,11 @@ window.getEl = function(id){
 
 
 
-
+/***************************************************************************
+ *
+ * getData
+ *
+ ***************************************************************************/
 window.getData = function(obj){
   
     var obj = obj;
@@ -466,6 +494,10 @@ window.getData = function(obj){
                         list[i] = list[i].trim();
                     }
                     return list;
+                }else if (obj == 'true'){
+                    return true
+                }else if (obj == 'false'){
+                    return false
                 }
             }
             return obj;
