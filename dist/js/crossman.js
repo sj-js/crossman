@@ -1,21 +1,42 @@
-/*************************
- * getEl
- * do cross browsing
- *************************/
-window.getNewEl = function(elNm, id, classNm, attrs, inner, eventNm, eventFunc){  
-    var newEl = document.createElement(elNm);   // HTML객체 생성
-    if (id) newEl.id = id;                              // 아이디  
-    if (classNm) newEl.setAttribute('class', classNm);      // 클래스 
-    for (var attrNm in attrs){ newEl.setAttribute(attrNm, attrs[attrNm]); } // 속성   
-    if (inner) newEl.innerHTML = inner;         // 안 값  
-    if (eventNm) getEl(newEl).addEventListener(eventNm, function(event){ eventFunc(event); });  // 이벤트
-    return newEl;                               // 반환 
+/***************************************************************************
+ *
+ * newElement
+ *
+ ***************************************************************************/
+// window.newEl = function(elNm, id, classNm, attrs, inner, eventNm, eventFunc){
+window.newEl = function(elNm, attributes, inner, eventNm, eventFunc){
+    var newElement = document.createElement(elNm);   // HTML객체 생성
+    // // 아이디
+    // if (id)
+    //     newElement.id = id;
+    // // 클래스
+    // if (classNm)
+    //     newElement.setAttribute('class', classNm);
+    // 속성
+    for (var attrNm in attributes){
+        newElement.setAttribute(attrNm, attributes[attrNm]);
+    }
+    // 내용
+    if (inner)
+        newElement.innerHTML = inner;
+    // 이벤트
+    if (eventNm){
+        getEl(newElement).addEventListener(eventNm, function(event){
+            eventFunc(event);
+        });
+    }
+    return newElement;
 };
 
 
 
 
-
+/***************************************************************************
+ *
+ * getElement
+ *  - do cross browsing
+ *
+ ***************************************************************************/
 window.getEl = function(id){
 
     var querySelectorAll = function(selector){
@@ -299,9 +320,12 @@ window.getEl = function(id){
 //            var domAttrPrefix = "data-";
             for (var i=0; i<keys.length; i++){
                 var key = keys[i];
+                var attributeValue = obj.getAttribute(key);
+                var conditionValue = param[key];
 //                if ( !(obj.getAttribute(domAttrPrefix + key) && obj.getAttribute(domAttrPrefix + key) == param[key]) ){
-                if ( !(obj.getAttribute(key) && obj.getAttribute(key) == param[key]) ){
-                    return;
+                if ( attributeValue && attributeValue == conditionValue || this.checkMatchingWithExpression(attributeValue, conditionValue)){
+                }else{
+                    return; //No Matching
                 }
             }              
             return obj;
@@ -444,7 +468,11 @@ window.getEl = function(id){
 
 
 
-
+/***************************************************************************
+ *
+ * getData
+ *
+ ***************************************************************************/
 window.getData = function(obj){
   
     var obj = obj;
@@ -466,6 +494,10 @@ window.getData = function(obj){
                         list[i] = list[i].trim();
                     }
                     return list;
+                }else if (obj == 'true'){
+                    return true
+                }else if (obj == 'false'){
+                    return false
                 }
             }
             return obj;
@@ -508,6 +540,310 @@ window.getData = function(obj){
 
 
 
+/***************************************************************************
+ *
+ * EVENT
+ *
+ ***************************************************************************/
+function SjEvent(){
+    this.specialEventListenerFunc;
+    this.globalEventMap = {};
+    this.objectEventMap = {};
+}
+
+/*************************
+ *
+ * EVENT - ADD
+ *
+ *************************/
+SjEvent.prototype.addEventListener = function(element, eventName, eventFunc){
+    var hasEvent = false;
+    var hasId = (element != null);
+    var hasEventName = (eventName != null);
+    var hasEventFunc = (eventFunc != null);
+    if (hasId){
+        //Get Element ID
+        var elementId = '';
+        if (element instanceof Element){
+            elementId = element.id;
+        }else if (typeof element == 'string' && element != ''){
+            elementId = element
+        }
+        console.log('EVENT ADDITION: ', elementId, eventName);
+        //Add Object Event
+        if (hasEventName && hasEventFunc){
+            if (!this.objectEventMap[elementId])
+                this.objectEventMap[elementId] = {};
+            this.addEvent(this.objectEventMap[elementId], eventName, eventFunc);
+        }
+    }else{
+        //Add Global Event
+        if (hasEventName && hasEventFunc)
+            this.addEventListenerByEventName(eventName, eventFunc);
+    }
+
+    //Special Event (After Add)
+    this.addSpecialEvent(element, eventName);
+};
+SjEvent.prototype.addEventListenerByEventName = function(eventName, eventFunc){
+    if (!this.globalEventMap)
+        this.globalEventMap = {};
+    this.addEvent(this.globalEventMap, eventName, eventFunc);
+};
+SjEvent.prototype.addEvent = function(eventMap, eventName, eventFunc){
+    if (!eventMap[eventName])
+        eventMap[eventName] = [];
+    eventMap[eventName].push(eventFunc);
+};
+/* Special Event */
+SjEvent.prototype.setSpecialEventListener = function(func){
+    this.specialEventListenerFunc = func;
+};
+SjEvent.prototype.addSpecialEvent = function(element, eventName){
+    if (this.specialEventListenerFunc)
+        this.specialEventListenerFunc(element, eventName);
+};
+
+/*************************
+ *
+ * EVENT - CHECK
+ *
+ *************************/
+SjEvent.prototype.hasEventListener = function(element, eventName, eventFunc){
+    var hasEvent = false;
+    var hasId = (element != null);
+    var hasEventName = (eventName != null);
+    var hasEventFunc = (eventFunc != null);
+    if (hasId){
+        //Get Element ID
+        var elementId = '';
+        if (element instanceof Element){
+            elementId = element.id;
+        }else if (typeof element == 'string' && element != ''){
+            elementId = element;
+        }
+        //Check Object Event
+        if (hasEventName){
+            var eventMapForObject = this.objectEventMap[elementId];
+            if (eventMapForObject != null){
+                for (var name in eventMapForObject){
+                    if (name == eventName)
+                        hasEvent = this.hasEvent(eventMapForObject, eventName, eventFunc);
+                }
+            }
+        }
+    }else{
+        //Check Global & Object Event
+        if (hasEventName && !hasEventFunc)
+            hasEvent = this.hasEventListenerByEventName(eventName);
+        if (hasEventName && hasEventFunc)
+            hasEvent = this.hasEventListenerByEventName(eventName, eventFunc);
+        if (!hasEventName && hasEventFunc)
+            hasEvent = this.hasEventListenerByEventFunc(eventFunc);
+    }
+    return hasEvent;
+};
+SjEvent.prototype.hasEventListenerByEventName = function(eventName, eventFunc){
+    //Check Global Event
+    if (this.hasEvent(this.globalEventMap, eventName, eventFunc));
+    return true;
+    //Check Object Event
+    for (var elementId in this.objectEventMap){
+        var eventMapForObject = this.objectEventMap[elementId];
+        var hasEventOnObject = this.hasEvent(eventMapForObject, eventName, eventFunc);
+        if (hasEventOnObject)
+            return true;
+    }
+    return false;
+};
+SjEvent.prototype.hasEventListenerByEventFunc = function(eventFunc){
+    //Check Global Event
+    if (this.hasEventFunc(this.globalEventMap, eventFunc))
+        return true;
+    //Check Object Event
+    for (var elementId in this.objectEventMap){
+        var eventMapForObject = this.objectEventMap[elementId];
+        var hasEventOnObject = this.hasEventFunc(eventMapForObject, eventFunc);
+        if (hasEventOnObject)
+            return true;
+    }
+    return false;
+};
+SjEvent.prototype.hasEvent = function(eventMap, eventName, eventFunc){
+    var hasEvent = false;
+    //Find Event
+    var eventFuncList = eventMap[eventName];
+    if (eventFunc == null){
+        //Find by eventName
+        hasEvent = (eventFuncList != null && eventFuncList.length > 0);
+    }else{
+        //Find by eventName, eventFunc
+        for (var i=0; i<eventFuncList.length; i++){
+            var func = eventFuncList[i];
+            hasEvent = (func == eventFunc);
+            if (hasEvent)
+                break;
+        }
+    }
+    return hasEvent;
+};
+SjEvent.prototype.hasEventFunc = function(eventMap, eventFunc){
+    var hasEvent = false;
+    //FindAll
+    for (var eventName in eventMap){
+        hasEvent = this.hasEvent(eventMap, eventName, eventFunc);
+        if (hasEvent)
+            break;
+    }
+    return hasEvent;
+};
+
+/*************************
+ *
+ * EVENT - REMOVE
+ *
+ *************************/
+SjEvent.prototype.removeEventListener = function(element, eventName, eventFunc){
+    var result = false;
+    var hasId = (element != null);
+    var hasEventName = (eventName != null);
+    var hasEventFunc = (eventFunc != null);
+    if (hasId){
+        //Get Element ID
+        var elementId = '';
+        if (element instanceof Element){
+            elementId = element.id;
+        }else if (typeof element == 'string' && element != ''){
+            elementId = element
+        }
+        //Remove Object Event
+        if (hasEventName && elementId != ''){
+            var eventMapForObject = this.objectEventMap[elementId];
+            if (eventMapForObject != null){
+                for (var name in eventMapForObject){
+                    if (name == eventName)
+                        result = this.removeEvent(eventMapForObject, eventName, eventFunc);
+                }
+            }
+        }
+    }else{
+        //Remove Global & Object Event
+        if (hasEventName && !hasEventFunc)
+            result = this.removeEventListenerByEventName(eventName);
+        if (hasEventName && hasEventFunc)
+            result = this.removeEventListenerByEventName(eventName, eventFunc);
+        if (!hasEventName && hasEventFunc)
+            result = this.removeEventListenerByEventFunc(eventFunc);
+    }
+    return result;
+};
+SjEvent.prototype.removeEventListenerByEventName = function(eventName, eventFunc){
+    var resultOnGlobal;
+    var resultOnObject;
+    //Remove Global Event
+    resultOnGlobal = this.removeEvent(this.globalEventMap, eventName, eventFunc);
+    //Remove Object Event
+    for (var elementId in this.objectEventMap){
+        var eventMapForObject = this.objectEventMap[elementId];
+        resultOnObject = this.removeEvent(eventMapForObject, eventName, eventFunc);
+        if (resultOnObject)
+            resultOnObject = true;
+    }
+    return (resultOnGlobal || resultOnObject);
+};
+SjEvent.prototype.removeEventListenerByEventFunc = function(eventFunc){
+    var resultOnGlobal;
+    var resultOnObject;
+    //Remove Global Event
+    resultOnGlobal = this.removeEventFunc(this.globalEventMap, eventFunc);
+    //Remove Object Event
+    for (var elementId in this.objectEventMap){
+        var eventMapForObject = this.objectEventMap[elementId];
+        resultOnObject = this.removeEventFunc(eventMapForObject, eventFunc);
+        if (resultOnObject)
+            resultOnObject = true;
+    }
+    return (resultOnGlobal || resultOnObject);
+};
+SjEvent.prototype.removeEvent = function(eventMap, eventName, eventFunc){
+    var result;
+    //Find Event
+    var eventFuncList = eventMap[eventName];
+    if (eventFunc == null && eventFunc == undefined){
+        delete eventMap[eventName];
+        result = true;
+    }else{
+        //Find by eventName, eventFunc
+        if (eventFuncList && eventFuncList.length > 0){
+            for (var i=0; i<eventFuncList.length; i++){
+                if (eventFunc == eventFuncList[i]){
+                    eventFuncList.splice(i, 1);
+                    result = true;
+                }
+            }
+        }
+    }
+    return result;
+};
+SjEvent.prototype.removeEventFunc = function(eventMap, eventFunc){
+    var result;
+    //FindAll
+    for (var eventName in eventMap){
+        result = this.removeEvent(eventMap, eventName, eventFunc);
+    }
+    return result;
+};
+
+/*************************
+ *
+ * EVENT - EXECUTE
+ *
+ *************************/
+SjEvent.prototype.execEventListener = function(element, eventName, event){
+    console.log('///// Execute Event' + element);
+    var resultForGlobal;
+    var resultForObject;
+    //Exec Global Event
+    resultForGlobal = this.execEvent(this.globalEventMap, eventName, event);
+    //Exec Object Event
+    if (element != null){
+        //Get Element ID
+        var elementId = '';
+        if (element instanceof Element){
+            elementId = element.id;
+        }else if (typeof element == 'string' && element != ''){
+            elementId = element
+        }
+        //Exec Event
+        if (elementId != '')
+            resultForObject = this.execEvent(this.objectEventMap[elementId], eventName, event);
+    }
+    return (resultForGlobal || resultForObject);
+};
+SjEvent.prototype.execEventListenerByEventName = function(eventName, event){
+    var resultOnGlobal;
+    var resultOnObject;
+    //Exec Global Event
+    resultOnGlobal = this.execEvent(this.globalEventMap, eventName, event);
+    //Exec Object Event
+    for (var elementId in this.objectEventMap){
+        var eventMapForObject = this.objectEventMap[elementId];
+        resultOnObject = this.execEvent(eventMapForObject, eventName, event);
+        if (resultOnObject)
+            resultOnObject = true;
+    }
+    return (resultOnGlobal || resultOnObject);
+};
+SjEvent.prototype.execEvent = function(eventMap, eventNm, event){
+    var result;
+    var eventList = eventMap[eventNm];
+    if (eventList){
+        for (var i=0; i<eventList.length; i++){
+            result = eventList[i](event);
+        }
+    }
+    return result;
+};
 
 
 /////////////////////////
