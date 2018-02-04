@@ -108,8 +108,6 @@ gulp.task('html', ['clean-html'], function(){
         .pipe(gulp.dest(paths.dest.html));
 });
 
-
-
 /** server **/
 // 웹서버를 localhost:8000 로 실행한다.
 gulp.task('server', function(){
@@ -124,11 +122,6 @@ gulp.task('server', function(){
 gulp.task('watch', function () {
 	livereload.listen();
 	gulp.watch(paths.src.js, ['js']);
-	gulp.watch(paths.src.jsGame1, ['jsGame1']);
-	gulp.watch(paths.src.jsGame2, ['jsGame2']);
-	gulp.watch(paths.src.jsGame3, ['jsGame3']);
-	gulp.watch(paths.src.jsGame4, ['jsGame4']);
-	gulp.watch(paths.src.jsGame5, ['jsGame5']);
 	gulp.watch(paths.src.css, ['css']);
 	gulp.watch(paths.src.html, ['html']);
 	gulp.watch(paths.src.res, ['res']);
@@ -137,8 +130,12 @@ gulp.task('watch', function () {
 
 
 /** bower **/
-gulp.task('bower', function(){
+gulp.task('bower-install', function(){
 	return bower();
+});
+
+gulp.task('bower-update', function(){
+	return bower({cmd:'update'});
 });
 
 
@@ -158,6 +155,7 @@ gulp.task('run', shell.task([
 
 //기본 task 설정
 gulp.task('default.bak', ['server','js','css','res','html','watch', 'shell']);
+gulp.task('bower', ['bower-install','bower-update']);
 gulp.task('build', ['js','css','res','html']);
 gulp.task('default', ['build']);
 gulp.task('start', ['run','build','watch']);
