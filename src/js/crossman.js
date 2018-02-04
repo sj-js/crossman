@@ -449,7 +449,21 @@ window.getEl = function(id){
         if (document.readyState == 'complete' || document.readyState == 'interactive'){
             afterLoadFunc();
         }else{
-            window.addEventListener('load', afterLoadFunc);
+            // Mozilla, Opera, Webkit
+            if (document.addEventListener){
+                document.addEventListener("DOMContentLoaded", function(){
+                    document.removeEventListener("DOMContentLoaded", arguments.callee, false);
+                    afterLoadFunc();
+                }, false);
+            // Internet Explorer
+            }else if (document.attachEvent){
+                document.attachEvent("onreadystatechange", function(){
+                    if (document.readyState === "complete"){
+                        document.detachEvent("onreadystatechange", arguments.callee);
+                        afterLoadFunc();
+                    }
+                });
+            }
         }
     };
 
@@ -476,6 +490,46 @@ window.getEl = function(id){
 window.getData = function(obj){
   
     var obj = obj;
+
+    /* 모바일여부 확인 */
+    this.isMobile = (function(){
+        var mFilter = "win16|win32|win64|mac";
+        var mCheck = false;
+        if (navigator.platform)
+            mCheck = ( mFilter.indexOf(navigator.platform.toLowerCase())<0 ) ? true : false;
+        return mCheck;
+    })();
+
+    /* 웹브라우져 알아내기 */
+    this.browserName = (function(){
+        if (navigator){
+            var ua = navigator.userAgent.toLowerCase();
+            if(ua.indexOf('naver') != -1){
+                return 'naver';
+            }else if(ua.indexOf('kakaotalk') != -1){
+                return 'kakaotalk';
+            }else if(ua.indexOf('opr') != -1 || ua.indexOf('opera') != -1){
+                return 'opera';
+            }else if(ua.indexOf('bdbrowser') != -1){
+                return 'baidu';
+            }else if(ua.indexOf('ucbrowser') != -1){
+                return 'uc';
+            }else if(ua.indexOf('chrome') != -1 && window.speechSynthesis){
+                return 'chrome';
+            }else if(ua.indexOf('safari') != -1 && ua.indexOf('android') == -1 ){
+                return 'safari';
+            }else if(ua.indexOf('firefox') != -1){
+                return 'firefox';
+            }else if(ua.indexOf('msie') != -1){
+                return 'ie';
+            }else if(ua.indexOf('trident') != -1){
+                return 'ie10+';
+            }
+            return 'etc';
+        }
+    })();
+
+
 
     this.parse = function(){
         if (obj){
