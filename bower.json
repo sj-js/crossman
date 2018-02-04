@@ -1,7 +1,7 @@
 {
   "name": "crossman",
   "description": "crossman is javascript library to croose browser",
-  "main": "dist/js/crossman.min.js",
+  "main": "dist/js/crossman.js",
   "authors": ["SJ <souljungkim@gmail.com>"],
   "license": "MIT",
   "keywords": ["cross", "browser", "browsing"],
