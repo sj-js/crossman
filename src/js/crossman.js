@@ -99,7 +99,7 @@ window.getEl = function(id){
             remove: function(classNm){
                 if (el.classList){
                     el.classList.remove(classNm);
-                }else{                  
+                }else if (el.className != undefined){
                     var classList = el.className.split(' ');                    
                     while (classList.indexOf(classNm) != -1){
                         classList.splice(classList.indexOf(classNm), 1);                        
@@ -898,6 +898,7 @@ SjEvent.prototype.execEvent = function(eventMap, eventNm, event){
     }
     return result;
 };
+window.SjEvent = SjEvent;
 
 
 /////////////////////////
@@ -949,10 +950,6 @@ SjEvent.prototype.execEvent = function(eventMap, eventNm, event){
 // window.addEventListener
 /////////////////////////
 (function(){
-    /* FireFox는 이 작업을 선행하게 하여 window.event객체를 전역으로 돌려야한다.*/
-    if (navigator.userAgent.indexOf('Firefox') != -1){  
-        window.addEventListener(eventNm, function(e){window.event=e;}, true);
-    }
     if (!window.addEventListener && window.attachEvent){
         window.addEventListener = function(eventNm, fn){
             window.attachEvent('on'+eventNm, function(event){ 
