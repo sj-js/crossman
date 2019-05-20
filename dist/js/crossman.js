@@ -39,12 +39,16 @@ window.newEl = function(elNm, attributes, inner, eventNm, eventFunc){
  ***************************************************************************/
 window.getEl = function(id){
 
+
+    /*************************
+     * selector
+     *************************/
     var querySelectorAll = function(selector){
         if (document.querySelectorAll){
             // return document.querySelectorAll(selector);
             return document.getElementById(selector);
         }else if (document.getElementsByTagName){
-            /* Attribute */         
+            /* Attribute */
             var startIdx = selector.indexOf('[');
             var endIdx = selector.indexOf(']');
             var attr;
@@ -54,39 +58,73 @@ window.getEl = function(id){
                 /* 유효성검사에 맞는 Form 태그 들만 */
                 var nodeNames = ['div', 'span', 'form', 'input', 'select', 'textarea'];
                 for (var searchI=0; searchI< nodeNames.length; searchI++){
-                    var elements = document.getElementsByTagName(nodeNames[searchI]);                   
-                    for (var searchJ=0; searchJ<elements.length; searchJ++){                        
+                    var elements = document.getElementsByTagName(nodeNames[searchI]);
+                    for (var searchJ=0; searchJ<elements.length; searchJ++){
                         if (elements[searchJ].getAttribute(attr) != undefined){
                             selectedList.push(elements[searchJ]);
                         }
                     }
                 }
             }
-            return selectedList;        
+            return selectedList;
         }
     };
 
-    var el
+    var el;
     if (id != null)
         el = (typeof id == 'object') ? id : document.getElementById(id);
     else
         el = document;
 
     // var el = (typeof id == 'object') ? id : querySelectorAll(id);    
-    this.obj = el;  
+    this.obj = el;
 
-    this.attr = function(key, val){ 
+
+
+    /*************************
+     * element
+     *************************/
+    this.returnElement = function(){
+        return el;
+    }
+
+
+
+    /*************************
+     * attribute
+     *************************/
+    this.attr = function(key, val){
         if (val){
-            el.setAttribute(key, val); 
+            el.setAttribute(key, val);
             return this;
         }else{
             return el.getAttribute(key);
-        }       
+        }
     };
+    this.html = function(innerHTML){
+        el.innerHTML = innerHTML;
+        return this;
+    };
+    this.value = function(value){
+        if (value != null){
+            el.value = value;
+            return this;
+        }
+        return el.value;
+    };
+    this.clear = function(){
+        el.innerHTML = '';
+        return this;
+    };
+
+
+    /*************************
+     * class
+     *************************/
     this.clas = (function(){
         var classFuncs = {
             has: function(classNm){
-                return (el.className.indexOf(classNm) != -1);                   
+                return (el.className && el.className.indexOf(classNm) != -1);
             },
             add: function(classNm){
                 if (el.classList){
@@ -99,10 +137,10 @@ window.getEl = function(id){
             remove: function(classNm){
                 if (el.classList){
                     el.classList.remove(classNm);
-                }else{                  
-                    var classList = el.className.split(' ');                    
+                }else if (el.className != undefined){
+                    var classList = el.className.split(' ');
                     while (classList.indexOf(classNm) != -1){
-                        classList.splice(classList.indexOf(classNm), 1);                        
+                        classList.splice(classList.indexOf(classNm), 1);
                     }
                     el.className = classList.join(' ');
                 }
@@ -110,22 +148,97 @@ window.getEl = function(id){
             }
         };
         return classFuncs;
-    }());    
-    this.add = function(appender){
-        if (typeof appender == 'object') 
-            el.appendChild(appender);
-        else 
-            el.innerHTML += appender;
+    }());
+    this.clazz = this.clas;
+
+    this.addClass = function(clazz){
+        if (clazz instanceof Array){
+            for (var i=0; i<clazz.length; i++){
+                var c = clazz[i];
+                this.clazz.add(c);
+            }
+        }else{
+            this.clazz.add(clazz);
+        }
         return this;
     };
-    this.addln = function(appender){        
+    this.hasClass = function(clazz){
+        var result = true;
+        if (clazz instanceof Array){
+            for (var i=0; i<clazz.length; i++){
+                var c = clazz[i];
+                if (!this.clazz.has(c)){
+                    result = false;
+                    break;
+                }
+            }
+        }else{
+            result = this.clazz.has(clazz);
+        }
+        return result;
+    };
+    this.removeClass = function(clazz){
+        if (clazz instanceof Array){
+            for (var i=0; i<clazz.length; i++){
+                var c = clazz[i];
+                this.clazz.remove(c);
+            }
+        }else{
+            this.clazz.remove(clazz);
+        }
+        return this;
+    };
+
+
+
+    /*************************
+     * append
+     *************************/
+    this.add = function(appender){
         if (typeof appender == 'object')
             el.appendChild(appender);
         else
-            el.innerHTML += (appender) ? appender : '';     
+            el.innerHTML += appender;
+        return this;
+    };
+    this.addln = function(appender){
+        if (appender){
+            if (typeof appender == 'object')
+                el.appendChild(appender);
+            else
+                el.innerHTML += (appender) ? appender : '';
+        }
         el.appendChild(document.createElement('br'));
         return this;
     };
+    this.addToFirst = function(appender){
+        el.insertBefore(appender, el.firstChild);
+        return this;
+    };
+    this.appendTo = function(parent){
+        if (typeof parent == 'string')
+            parent = document.getElementById(parent);
+        parent.appendChild(el);
+        return this;
+    };
+    this.addFrontOf = function(node, sibling){
+        el.insertBefore(node, sibling);
+        return this;
+    };
+    this.del = function(removeElObj){
+        el.removeChild(removeElObj);
+        return this;
+    };
+    this.removeFromParent = function(){
+        if (el && el.parentNode)
+            el.parentNode.removeChild(el);
+        return this;
+    };
+
+
+    /*************************
+     * event
+     *************************/
     this.hasEventListener = function(eventNm){
         return el.hasEventListener(eventNm);
     };
@@ -133,39 +246,100 @@ window.getEl = function(id){
         el.removeEventListener(eventNm, fn);
         return this;
     };
-    this.addEventListener = function(eventNm, fn){      
+    this.addEventListener = function(eventNm, fn){
         /* FireFox */
-        if (navigator.userAgent.indexOf('Firefox') != -1){  
+        if (navigator.userAgent.indexOf('Firefox') != -1){
             el.addEventListener(eventNm, function(e){window.event=e;}, true);
-        }       
+        }
         /* general */
-        if (el.addEventListener){           
+        if (el.addEventListener){
             el.addEventListener(eventNm, function(event){
                 fn(event);
                 // fn(event, getEventTarget(event)); 
-            });     
+            });
         /* IE8 */
-        }else{                      
-            el.attachEvent('on'+eventNm, function(event){               
-                if (!event.target && event.srcElement) event.target = event.srcElement;
-                fn(event);
-                // fn(event, getEventTarget(event)); 
-            });         
+        }else{
+            try{
+                el.attachEvent('on'+eventNm, function(event){
+                    if (!event.target && event.srcElement) event.target = event.srcElement;
+                    fn(event);
+                    // fn(event, getEventTarget(event));
+                });
+            }catch(e){
+                console.error(e);
+            }
+
         }
-        return;
-    };    
-    this.del = function(removeElObj){
-        el.removeChild(removeElObj);
         return this;
     };
-    this.html = function(innerHTML){
-        el.innerHTML = innerHTML;
-        return this;
-    };  
-    this.clear = function(){
-        el.innerHTML = '';
-        return this;
+    this.trigger = function(eventNm){
+        if ("createEvent" in document) {
+            var event = document.createEvent("HTMLEvents");
+            event.initEvent(eventNm, false, true);
+            el.dispatchEvent(event);
+        }else{
+            el.fireEvent("on" +eventNm);
+        }
     };
+
+    this.ready = function(afterLoadFunc){
+        if (window.parentWindow){
+            /** Maybe when window.open **/
+            afterLoadFunc();
+        }else{
+            /** Maybe when usually **/
+            if (document.readyState == 'complete' || document.readyState == 'interactive'){
+                afterLoadFunc();
+            }else{
+                // Mozilla, Opera, Webkit
+                if (document.addEventListener){
+                    document.addEventListener("DOMContentLoaded", function(){
+                        document.removeEventListener("DOMContentLoaded", arguments.callee, false);
+                        afterLoadFunc();
+                    }, false);
+                    // Internet Explorer
+                }else if (document.attachEvent){
+                    document.attachEvent("onreadystatechange", function(){
+                        if (document.readyState === "complete"){
+                            document.detachEvent("onreadystatechange", arguments.callee);
+                            afterLoadFunc();
+                        }
+                    });
+                }
+            }
+        }
+    };
+
+    this.resize = function(funcToAdd){
+        var oldFunc = window.onresize;
+        window.onresize = function(){
+            if (oldFunc)
+                oldFunc();
+            funcToAdd();
+        };
+    };
+
+
+
+
+
+    /*************************
+     * each
+     *************************/
+    this.forChildren = function(functionForLoop){
+        var children = el.children;
+        for (var iii=0; iii<children.length; iii++){
+            var child = children[iii];
+            functionForLoop(child);
+        }
+    };
+
+
+
+
+    /*************************
+     * etc
+     *************************/
     this.scrollDown = function(){
         el.scrollTop = el.scrollHeight;
         return this;
@@ -181,25 +355,25 @@ window.getEl = function(id){
 
 
 
-    this.hideDiv = function(){          
+    this.hideDiv = function(){
         el.style.display = 'block';
         el.style.position = 'absolute';
         el.style.left = '-5555px';
         el.style.top = '-5555px';
         return this;
     };
-    this.showDiv = function(){      
+    this.showDiv = function(){
         el.style.display = 'block';
         el.style.position = 'absolute';
         el.style.left = '0px';
-        el.style.top = '0px';       
-        return this;        
+        el.style.top = '0px';
+        return this;
     };
-    this.getNewSeqId = function(idStr){        
+    this.getNewSeqId = function(idStr){
         for (var seq=1; seq < 50000; seq++){
             var searchEmptyId = idStr + seq
             if (!(searchEmptyId in el)) return searchEmptyId;
-        }       
+        }
         return null;
     };
 
@@ -207,9 +381,9 @@ window.getEl = function(id){
 
 
 
-    
-    this.isAccepted = function(acceptObj, rejectObj){    
-        var isOk = false;    
+
+    this.isAccepted = function(acceptObj, rejectObj){
+        var isOk = false;
         if (acceptObj){
             if (this.find(acceptObj)){
                 isOk = true;
@@ -224,37 +398,37 @@ window.getEl = function(id){
         }
         return isOk;
     };
-    this.find = function(param){    
+    this.find = function(param){
         if (el instanceof Array){
             var results = [];
-            for (var i=0; i<el.length; i++){            
+            for (var i=0; i<el.length; i++){
                 var matchedObj = this.getMatchedObjWithParam(el[i], param);
-                if (matchedObj) 
+                if (matchedObj)
                     results.push(matchedObj);
-            }        
+            }
             return results;
         }
-        if (el instanceof Object){ 
+        if (el instanceof Object){
             var matchedObj = this.getMatchedObjWithParam(el, param);
             return matchedObj;
-        }        
+        }
     };
 
     // Param==Array => Or조건
     // Param==Object => 해당조건
     this.getMatchedObjWithParam = function(obj, param){
-        if (typeof param == 'string'){        
+        if (typeof param == 'string'){
             param = {id:param};
         }
-        if (param instanceof Array){        
-            for (var i=0; i<param.length; i++){            
+        if (param instanceof Array){
+            for (var i=0; i<param.length; i++){
                 if (this.find(param[i]))
                     return obj;
             }
             return; //No Matching
         }
-        if (param instanceof Object){        
-            var keys = Object.keys(param);        
+        if (param instanceof Object){
+            var keys = Object.keys(param);
             for (var i=0; i<keys.length; i++){
                 var key = keys[i];
                 var attributeValue = obj[key];
@@ -265,7 +439,7 @@ window.getEl = function(id){
                 }
             }
             return obj;
-        }    
+        }
     };
     this.checkMatchingWithExpression = function(value, condition){
         var result;
@@ -282,40 +456,59 @@ window.getEl = function(id){
             result = (exclamationFlag) ? !result : result;
         }
         return result;
-    }
+    };
 
+    this.findAll = function(finder){
+        var resultList = [];
+        if (el instanceof Array){
+            for (var i=0; i<el.length; i++){
+                var data = el[i];
+                var found = getEl(data).find(finder);
+                if (found != null)
+                    resultList.push(found);
+            }
+        }else if (el instanceof Object){
+            for (var dataCode in this.dataPool){
+                var data = el[dataCode];
+                var found = getEl(data).find(finder);
+                if (found != null)
+                    resultList.push(found);
+            }
+        }
+        return resultList
+    };
 
 
     // Find HTMLDOMElement 
     this.findDomAttribute = function(param){
         if (el instanceof Array){
             var results = [];
-            for (var i=0; i<el.length; i++){            
+            for (var i=0; i<el.length; i++){
                 var matchedObj = this.getMatchedDomAttributeWithParam(el[i], param);
-                if (matchedObj) 
+                if (matchedObj)
                     results.push(matchedObj);
-            }        
+            }
             return results;
         }
-        if (el instanceof Object){ 
+        if (el instanceof Object){
             var matchedObj = this.getMatchedDomAttributeWithParam(el, param);
             return matchedObj;
-        }        
-    };    
+        }
+    };
 
     // Param==Array => Or조건
     // Param==Object => 해당조건
     this.getMatchedDomAttributeWithParam = function(obj, param){
-        if (typeof param == 'string'){        
+        if (typeof param == 'string'){
             param = {id:param};
         }
-        if (param instanceof Array){        
-            for (var i=0; i<param.length; i++){            
+        if (param instanceof Array){
+            for (var i=0; i<param.length; i++){
                 if (this.findDomAttribute(param[i])) return obj;
             }
             return;
         }
-        if (param instanceof Object){        
+        if (param instanceof Object){
             var keys = Object.keys(param);
 //            var domAttrPrefix = "data-";
             for (var i=0; i<keys.length; i++){
@@ -327,9 +520,9 @@ window.getEl = function(id){
                 }else{
                     return; //No Matching
                 }
-            }              
+            }
             return obj;
-        }    
+        }
     };
 
 
@@ -347,24 +540,24 @@ window.getEl = function(id){
     this.findEl = function(attr, val){
         var subEls = el.children;
         for (var i=0; i<subEls.length; i++){
-            if (subEls[i].getAttribute(attr) == val) return subEls[i];          
-        }                   
+            if (subEls[i].getAttribute(attr) == val) return subEls[i];
+        }
     };
     this.findParentEl = function(attr, val){
         var foundEl;
-        var parentEl = el;      
+        var parentEl = el;
         while(parentEl){
             if (parentEl != document.body.parentNode){
                 if (parentEl.getAttribute(attr) == val){
                     foundEl = parentEl;
-                    break;              
+                    break;
                 }
             }else{
                 foundEl = null;
                 break;
             }
             parentEl = parentEl.parentNode;
-        }       
+        }
         return foundEl;
     };
 
@@ -372,18 +565,18 @@ window.getEl = function(id){
 
     /*****
      * 문서의 스크롤된 수치 반환
-     * IE8 : document.documentElement.scrollLeft 
-     * IE9 : window.pageXOffset 
-     * IE11 & others : document.body.scrollLeft 
+     * IE8 : document.documentElement.scrollLeft
+     * IE9 : window.pageXOffset
+     * IE11 & others : document.body.scrollLeft
      *****/
-    this.getBodyScrollX = function(event){    
+    this.getBodyScrollX = function(event){
         var bodyPageX = 0;
         if (document.documentElement && document.documentElement.scrollLeft) bodyPageX = document.documentElement.scrollLeft;
         if (window.pageXOffset) bodyPageY = window.pageXOffset;
         if (document.body && document.body.scrollLeft) bodyPageX = document.body.scrollLeft;
         return bodyPageX;
     };
-    this.getBodyScrollY = function(event){    
+    this.getBodyScrollY = function(event){
         var bodyPageY = 0;
         if (document.documentElement && document.documentElement.scrollTop) bodyPageY = document.documentElement.scrollTop;
         if (window.pageYOffset) bodyPageY = window.pageYOffset;
@@ -392,10 +585,10 @@ window.getEl = function(id){
     };
     /*****
      * 문서의 크기
-     * IE구버전 : document.documentElement.offsetWidth 
-     * IE11 & others : document.body.offsetWidth 
+     * IE구버전 : document.documentElement.offsetWidth
+     * IE11 & others : document.body.offsetWidth
      *****/
-    this.getBodyOffsetX = function(event){    
+    this.getBodyOffsetX = function(event){
         var bodyOffsetX = 0;
         if (document.documentElement && document.documentElement.offsetWidth) return document.documentElement.offsetWidth;
         if (document.body && document.body.offsetWidth) return document.body.offsetWidth;
@@ -445,36 +638,7 @@ window.getEl = function(id){
         return objBodyOffset;
     };
 
-    this.ready = function(afterLoadFunc){
-        if (document.readyState == 'complete' || document.readyState == 'interactive'){
-            afterLoadFunc();
-        }else{
-            // Mozilla, Opera, Webkit
-            if (document.addEventListener){
-                document.addEventListener("DOMContentLoaded", function(){
-                    document.removeEventListener("DOMContentLoaded", arguments.callee, false);
-                    afterLoadFunc();
-                }, false);
-            // Internet Explorer
-            }else if (document.attachEvent){
-                document.attachEvent("onreadystatechange", function(){
-                    if (document.readyState === "complete"){
-                        document.detachEvent("onreadystatechange", arguments.callee);
-                        afterLoadFunc();
-                    }
-                });
-            }
-        }
-    };
 
-    this.resize = function(funcToAdd){
-        var oldFunc = window.onresize;
-        window.onresize = function(){
-            if (oldFunc)
-                oldFunc();
-            funcToAdd();
-        };
-    };
 
     return this;
 };
@@ -488,7 +652,7 @@ window.getEl = function(id){
  *
  ***************************************************************************/
 window.getData = function(obj){
-  
+
     var obj = obj;
 
     /* 모바일여부 확인 */
@@ -542,20 +706,21 @@ window.getData = function(obj){
                 }else if (startStr == '[' && endStr == ']'){
                     return JSON.parse(obj);
 
-                }else if (obj.indexOf(',') != -1){
-                    var list = obj.split(',');
-                    for (var i=0; i<list.length; i++){
+                }else if (obj.indexOf(',') != -1 || obj.trim().indexOf(' ')){
+                    var list = obj.split(/[\s,]+/);
+                    for (var i = 0; i < list.length; i++) {
                         list[i] = list[i].trim();
                     }
                     return list;
+
                 }else if (obj == 'true'){
-                    return true
+                    return true;
                 }else if (obj == 'false'){
-                    return false
+                    return false;
                 }
             }
             return obj;
-        }        
+        }
     };
 
     this.findHighestZIndex = function(tagName){
@@ -567,16 +732,16 @@ window.getData = function(obj){
             tagName = [tagName];
         }
         //Search
-        if (tagName instanceof Array){        
+        if (tagName instanceof Array){
             for (var i=0; i<tagName.length; i++){
-                var elementList = document.getElementsByTagName(tagName[0]);            
+                var elementList = document.getElementsByTagName(tagName[0]);
                 for (var i=0; i<elementList.length; i++){
                     var zIndex = document.defaultView.getComputedStyle(elementList[i], null).getPropertyValue("z-index");
                     if (zIndex > highestIndex && zIndex != 'auto'){
                         highestIndex = zIndex;
                     }
-                }    
-            }    
+                }
+            }
         }else{
             console.log('Could not get highest z-index. because, not good parameter', tagName);
         }
@@ -615,6 +780,12 @@ SjEvent.prototype.addEventListener = function(element, eventName, eventFunc){
     var hasId = (element != null);
     var hasEventName = (eventName != null);
     var hasEventFunc = (eventFunc != null);
+    if (hasEventFunc){
+        if (typeof eventFunc == 'string'){
+            eventFunc = new Function('event', eventFunc);
+        }
+    }
+
     if (hasId){
         //Get Element ID
         var elementId = '';
@@ -699,8 +870,8 @@ SjEvent.prototype.hasEventListener = function(element, eventName, eventFunc){
 };
 SjEvent.prototype.hasEventListenerByEventName = function(eventName, eventFunc){
     //Check Global Event
-    if (this.hasEvent(this.globalEventMap, eventName, eventFunc));
-    return true;
+    if (this.hasEvent(this.globalEventMap, eventName, eventFunc))
+        return true;
     //Check Object Event
     for (var elementId in this.objectEventMap){
         var eventMapForObject = this.objectEventMap[elementId];
@@ -854,7 +1025,7 @@ SjEvent.prototype.removeEventFunc = function(eventMap, eventFunc){
  *
  *************************/
 SjEvent.prototype.execEventListener = function(element, eventName, event){
-    console.log('///// Execute Event' + element);
+    console.log('///// Execute Event', element.id, eventName);
     var resultForGlobal;
     var resultForObject;
     //Exec Global Event
@@ -898,6 +1069,7 @@ SjEvent.prototype.execEvent = function(eventMap, eventNm, event){
     }
     return result;
 };
+window.SjEvent = SjEvent;
 
 
 /////////////////////////
@@ -915,24 +1087,28 @@ SjEvent.prototype.execEvent = function(eventMap, eventNm, event){
         window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame']
                                    || window[vendors[x]+'CancelRequestAnimationFrame'];
     }
- 
+
     if (!window.requestAnimationFrame)
         window.requestAnimationFrame = function(callback, element) {
             var currTime = new Date().getTime();
             var timeToCall = Math.max(0, 16 - (currTime - lastTime));
-            var id = window.setTimeout(function(){ 
-                callback(currTime + timeToCall); 
+            var id = window.setTimeout(function(){
+                callback(currTime + timeToCall);
             }, timeToCall);
             lastTime = currTime + timeToCall;
             return id;
         };
- 
+
     if (!window.cancelAnimationFrame)
         window.cancelAnimationFrame = function(id) {
             clearTimeout(id);
         };
 }());
 
+
+/** PointerLock **/
+// document.body.requestPointerLock = document.body.requestPointerLock || document.body.mozRequestPointerLock || document.body.webkitRequestPointerLock;
+// document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock || document.webkitExitPointerLock;
 
 
 /////////////////////////
@@ -949,24 +1125,20 @@ SjEvent.prototype.execEvent = function(eventMap, eventNm, event){
 // window.addEventListener
 /////////////////////////
 (function(){
-    /* FireFox는 이 작업을 선행하게 하여 window.event객체를 전역으로 돌려야한다.*/
-    if (navigator.userAgent.indexOf('Firefox') != -1){  
-        window.addEventListener(eventNm, function(e){window.event=e;}, true);
-    }
     if (!window.addEventListener && window.attachEvent){
         window.addEventListener = function(eventNm, fn){
-            window.attachEvent('on'+eventNm, function(event){ 
+            window.attachEvent('on'+eventNm, function(event){
                 if (!event.target && event.srcElement) event.target = event.srcElement;
                 if (!event.preventDefault) event.preventDefault = function(){};
                 if (!event.stopPropagation){
                     event.stopPropagation = function(){
-                        event.returnValue = false; 
+                        event.returnValue = false;
                         event.cancelBubble = true;
                     };
                 }
-                fn(event); 
-            });         
-        }   
+                fn(event);
+            });
+        }
     }
 }());
 
@@ -992,7 +1164,7 @@ SjEvent.prototype.execEvent = function(eventMap, eventNm, event){
     if (!document.querySelectorAll){
         if(document.getElementsByTagName){
             document.querySelectorAll = function(){
-                /* Attribute */         
+                /* Attribute */
                 var startIdx = selector.indexOf('[');
                 var endIdx = selector.indexOf(']');
                 var attr;
@@ -1002,18 +1174,18 @@ SjEvent.prototype.execEvent = function(eventMap, eventNm, event){
                     /* 유효성검사에 맞는 Form 태그 들만 */
                     var nodeNames = ['div', 'span', 'form', 'input', 'select', 'textarea'];
                     for (var searchI=0; searchI< nodeNames.length; searchI++){
-                        var elements = document.getElementsByTagName(nodeNames[searchI]);                   
-                        for (var searchJ=0; searchJ<elements.length; searchJ++){                        
+                        var elements = document.getElementsByTagName(nodeNames[searchI]);
+                        for (var searchJ=0; searchJ<elements.length; searchJ++){
                             if (elements[searchJ].getAttribute(attr) != undefined){
                                 selectedList.push(elements[searchJ]);
                             }
                         }
                     }
                 }
-                return selectedList;        
+                return selectedList;
             };
         }
-    }    
+    }
 }());
 
 /////////////////////////
@@ -1070,3 +1242,12 @@ SjEvent.prototype.execEvent = function(eventMap, eventNm, event){
         };
     }
 }());
+
+/////////////////////////
+// String.trim()
+/////////////////////////
+if (!String.prototype.trim) {
+    String.prototype.trim = function () {
+        return this.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
+    };
+}
