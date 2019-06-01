@@ -282,6 +282,7 @@ window.getEl = function(id){
         }
     };
 
+    //TODO: 조금 이상한 현상이 일어남.
     this.ready = function(afterLoadFunc){
         if (window.parentWindow){
             /** Maybe when window.open **/
@@ -571,16 +572,22 @@ window.getEl = function(id){
      *****/
     this.getBodyScrollX = function(event){
         var bodyPageX = 0;
-        if (document.documentElement && document.documentElement.scrollLeft) bodyPageX = document.documentElement.scrollLeft;
-        if (window.pageXOffset) bodyPageY = window.pageXOffset;
-        if (document.body && document.body.scrollLeft) bodyPageX = document.body.scrollLeft;
+        if (document.documentElement && document.documentElement.scrollLeft)
+            bodyPageX = document.documentElement.scrollLeft;
+        if (window.pageXOffset)
+            bodyPageX = window.pageXOffset;
+        if (document.body && document.body.scrollLeft)
+            bodyPageX = document.body.scrollLeft;
         return bodyPageX;
     };
     this.getBodyScrollY = function(event){
         var bodyPageY = 0;
-        if (document.documentElement && document.documentElement.scrollTop) bodyPageY = document.documentElement.scrollTop;
-        if (window.pageYOffset) bodyPageY = window.pageYOffset;
-        if (document.body && document.body.scrollTop) bodyPageY = document.body.scrollTop;
+        if (document.documentElement && document.documentElement.scrollTop)
+            bodyPageY = document.documentElement.scrollTop;
+        if (window.pageYOffset)
+            bodyPageY = window.pageYOffset;
+        if (document.body && document.body.scrollTop)
+            bodyPageY = document.body.scrollTop;
         return bodyPageY;
     };
     /*****
@@ -590,21 +597,25 @@ window.getEl = function(id){
      *****/
     this.getBodyOffsetX = function(event){
         var bodyOffsetX = 0;
-        if (document.documentElement && document.documentElement.offsetWidth) return document.documentElement.offsetWidth;
-        if (document.body && document.body.offsetWidth) return document.body.offsetWidth;
+        if (document.documentElement && document.documentElement.offsetWidth)
+            return document.documentElement.offsetWidth;
+        if (document.body && document.body.offsetWidth)
+            return document.body.offsetWidth;
         return bodyOffsetX;
     };
     this.getBodyOffsetY = function(event){
         var bodyOffsetY = 0;
-        if (document.documentElement && document.documentElement.offsetHeight) return document.documentElement.offsetHeight;
-        if (document.body && document.body.offsetHeight) return document.body.offsetHeight;
+        if (document.documentElement && document.documentElement.offsetHeight)
+            return document.documentElement.offsetHeight;
+        if (document.body && document.body.offsetHeight)
+            return document.body.offsetHeight;
         return bodyOffsetY;
     };
     /* 눈에 보이는 좌표 값 (객체마다  DOM TREE구조와 position의 영향을 받기 때문에, 다른 계산이 필요하여 만든 함수)
      * 재료는 DOM객체 */
     this.getBoundingClientRect = function(){
         if (el.getBoundingClientRect)
-            return el.getBoundingClientRect();
+            return el.getBoundingClientRect();  //TODO: BODY의 화면상 Scroll된 영역으로부터 상대적인 수치를 주는 것 같다.
         var sumOffsetLeft = 0;
         var sumOffsetTop = 0;
         var thisObj = el;
@@ -637,6 +648,35 @@ window.getEl = function(id){
         var objBodyOffset = {left:sumOffsetLeft, top:sumOffsetTop, width:el.offsetWidth, height:el.offsetHeight};
         return objBodyOffset;
     };
+
+
+    this.getBoundingOffsetRect = function(){
+        //SJTEST
+        var pScrollLeft = 0;
+        var pScrollTop = 0;
+        if (el.parentNode){
+            pScrollLeft = el.parentNode.scrollLeft;
+            pScrollTop = el.parentNode.scrollTop;
+        }
+
+        var domRect = this.getBoundingClientRect();
+        // console.error(domRect, domRect.top, domRect.top + pScrollTop, pScrollTop);
+        var left = domRect.left + pScrollLeft;
+        var top = domRect.top + pScrollTop;
+
+        var objBodyOffset = {
+            left:left,
+            right: left + domRect.width,
+            top: top,
+            bottom: top + domRect.height,
+            x: left,
+            y: top,
+            width: domRect.width,
+            height: domRect.height,
+        };
+        return objBodyOffset;
+    };
+
 
 
 
