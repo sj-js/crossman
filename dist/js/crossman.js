@@ -76,7 +76,12 @@ window.getEl = function(id){
     else
         el = document;
 
-    // var el = (typeof id == 'object') ? id : querySelectorAll(id);    
+    // var el = (typeof id == 'object') ? id : querySelectorAll(id);
+    if (!this){ //TODO: 오잉? this가 없을때가 있네? 근데 window.getEl()로 호출 다시 해주니까 되네??
+        console.error('[ WARNING ! ! ! ] What the error !?', id);
+        return window.getEl(id);
+    }
+
     this.obj = el;
 
 
@@ -112,8 +117,28 @@ window.getEl = function(id){
         }
         return el.value;
     };
+    this.check = function(flag){
+        el.checked = flag;
+        return this;
+    };
     this.clear = function(){
         el.innerHTML = '';
+        return this;
+    };
+    this.style = function(cssText){
+        el.style.cssText = cssText;
+        return this;
+    };
+    this.addStyle = function(property, value){
+        if (typeof property == 'object'){
+            var styleDataObject = property;
+            for (var key in styleDataObject){
+                this.addStyle(key, property[key]);
+            }
+            return this;
+        }
+        //Object로 간주
+        el.style[property] = value;
         return this;
     };
 
@@ -166,9 +191,22 @@ window.getEl = function(id){
         var result = true;
         if (clazz instanceof Array){
             for (var i=0; i<clazz.length; i++){
-                var c = clazz[i];
-                if (!this.clazz.has(c)){
+                if (!this.clazz.has(clazz[i])){
                     result = false;
+                    break;
+                }
+            }
+        }else{
+            result = this.clazz.has(clazz);
+        }
+        return result;
+    };
+    this.hasSomeClass = function(clazz){
+        var result = false;
+        if (clazz instanceof Array){
+            for (var i=0; i<clazz.length; i++){
+                if (this.clazz.has(clazz[i])){
+                    result = true;
                     break;
                 }
             }
@@ -259,6 +297,10 @@ window.getEl = function(id){
             });
         /* IE8 */
         }else{
+            if (!el.attachEvent){
+                //No attachEvent
+                return this;
+            }
             try{
                 el.attachEvent('on'+eventNm, function(event){
                     if (!event.target && event.srcElement) event.target = event.srcElement;
@@ -282,6 +324,7 @@ window.getEl = function(id){
         }
     };
 
+    //TODO: 조금 이상한 현상이 일어남.
     this.ready = function(afterLoadFunc){
         if (window.parentWindow){
             /** Maybe when window.open **/
@@ -294,14 +337,16 @@ window.getEl = function(id){
                 // Mozilla, Opera, Webkit
                 if (document.addEventListener){
                     document.addEventListener("DOMContentLoaded", function(){
-                        document.removeEventListener("DOMContentLoaded", arguments.callee, false);
+                        //TODO: 이게 왜 언제 어떻게 어째서??? 이것떔시 resize 이벤트가 안되고 막 그랬던듯??
+                        // document.removeEventListener("DOMContentLoaded", arguments.callee, false);
                         afterLoadFunc();
                     }, false);
                     // Internet Explorer
                 }else if (document.attachEvent){
                     document.attachEvent("onreadystatechange", function(){
                         if (document.readyState === "complete"){
-                            document.detachEvent("onreadystatechange", arguments.callee);
+                            //TODO: 이게 왜 언제 어떻게 어째서??? 이것떔시 resize 이벤트가 안되고 막 그랬던듯??
+                            // document.detachEvent("onreadystatechange", arguments.callee);
                             afterLoadFunc();
                         }
                     });
@@ -571,16 +616,22 @@ window.getEl = function(id){
      *****/
     this.getBodyScrollX = function(event){
         var bodyPageX = 0;
-        if (document.documentElement && document.documentElement.scrollLeft) bodyPageX = document.documentElement.scrollLeft;
-        if (window.pageXOffset) bodyPageY = window.pageXOffset;
-        if (document.body && document.body.scrollLeft) bodyPageX = document.body.scrollLeft;
+        if (document.documentElement && document.documentElement.scrollLeft)
+            bodyPageX = document.documentElement.scrollLeft;
+        if (window.pageXOffset)
+            bodyPageX = window.pageXOffset;
+        if (document.body && document.body.scrollLeft)
+            bodyPageX = document.body.scrollLeft;
         return bodyPageX;
     };
     this.getBodyScrollY = function(event){
         var bodyPageY = 0;
-        if (document.documentElement && document.documentElement.scrollTop) bodyPageY = document.documentElement.scrollTop;
-        if (window.pageYOffset) bodyPageY = window.pageYOffset;
-        if (document.body && document.body.scrollTop) bodyPageY = document.body.scrollTop;
+        if (document.documentElement && document.documentElement.scrollTop)
+            bodyPageY = document.documentElement.scrollTop;
+        if (window.pageYOffset)
+            bodyPageY = window.pageYOffset;
+        if (document.body && document.body.scrollTop)
+            bodyPageY = document.body.scrollTop;
         return bodyPageY;
     };
     /*****
@@ -590,21 +641,25 @@ window.getEl = function(id){
      *****/
     this.getBodyOffsetX = function(event){
         var bodyOffsetX = 0;
-        if (document.documentElement && document.documentElement.offsetWidth) return document.documentElement.offsetWidth;
-        if (document.body && document.body.offsetWidth) return document.body.offsetWidth;
+        if (document.documentElement && document.documentElement.offsetWidth)
+            return document.documentElement.offsetWidth;
+        if (document.body && document.body.offsetWidth)
+            return document.body.offsetWidth;
         return bodyOffsetX;
     };
     this.getBodyOffsetY = function(event){
         var bodyOffsetY = 0;
-        if (document.documentElement && document.documentElement.offsetHeight) return document.documentElement.offsetHeight;
-        if (document.body && document.body.offsetHeight) return document.body.offsetHeight;
+        if (document.documentElement && document.documentElement.offsetHeight)
+            return document.documentElement.offsetHeight;
+        if (document.body && document.body.offsetHeight)
+            return document.body.offsetHeight;
         return bodyOffsetY;
     };
     /* 눈에 보이는 좌표 값 (객체마다  DOM TREE구조와 position의 영향을 받기 때문에, 다른 계산이 필요하여 만든 함수)
      * 재료는 DOM객체 */
     this.getBoundingClientRect = function(){
         if (el.getBoundingClientRect)
-            return el.getBoundingClientRect();
+            return el.getBoundingClientRect();  //TODO: BODY의 화면상 Scroll된 영역으로부터 상대적인 수치를 주는 것 같다.
         var sumOffsetLeft = 0;
         var sumOffsetTop = 0;
         var thisObj = el;
@@ -637,6 +692,35 @@ window.getEl = function(id){
         var objBodyOffset = {left:sumOffsetLeft, top:sumOffsetTop, width:el.offsetWidth, height:el.offsetHeight};
         return objBodyOffset;
     };
+
+
+    this.getBoundingOffsetRect = function(){
+        //SJTEST
+        var pScrollLeft = 0;
+        var pScrollTop = 0;
+        if (el.parentNode){
+            pScrollLeft = el.parentNode.scrollLeft;
+            pScrollTop = el.parentNode.scrollTop;
+        }
+
+        var domRect = this.getBoundingClientRect();
+        // console.error(domRect, domRect.top, domRect.top + pScrollTop, pScrollTop);
+        var left = domRect.left + pScrollLeft;
+        var top = domRect.top + pScrollTop;
+
+        var objBodyOffset = {
+            left:left,
+            right: left + domRect.width,
+            top: top,
+            bottom: top + domRect.height,
+            x: left,
+            y: top,
+            width: domRect.width,
+            height: domRect.height,
+        };
+        return objBodyOffset;
+    };
+
 
 
 
@@ -706,7 +790,7 @@ window.getData = function(obj){
                 }else if (startStr == '[' && endStr == ']'){
                     return JSON.parse(obj);
 
-                }else if (obj.indexOf(',') != -1 || obj.trim().indexOf(' ')){
+                }else if (obj.indexOf(',') != -1 || obj.trim().indexOf(' ') != -1){
                     var list = obj.split(/[\s,]+/);
                     for (var i = 0; i < list.length; i++) {
                         list[i] = list[i].trim();
@@ -794,7 +878,6 @@ SjEvent.prototype.addEventListener = function(element, eventName, eventFunc){
         }else if (typeof element == 'string' && element != ''){
             elementId = element
         }
-        console.log('EVENT ADDITION: ', elementId, eventName);
         //Add Object Event
         if (hasEventName && hasEventFunc){
             if (!this.objectEventMap[elementId])
@@ -1025,7 +1108,6 @@ SjEvent.prototype.removeEventFunc = function(eventMap, eventFunc){
  *
  *************************/
 SjEvent.prototype.execEventListener = function(element, eventName, event){
-    console.log('///// Execute Event', element.id, eventName);
     var resultForGlobal;
     var resultForObject;
     //Exec Global Event
