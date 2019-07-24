@@ -1,0 +1,25 @@
+language: node_js
+node_js: 11.10.0
+os:
+- linux
+before_script:
+- npm install -g gulp
+script: gulp
+
+cache:
+  directories:
+    - "node_modules"
+
+before_deploy:
+  - pwd
+  - ls dist/js/
+  
+deploy:
+  provider: releases
+  api_key:
+    secure: "bQTan+FiGmHfzmAmwDAcl+rnROzTmGP6KQTSCDQxKxE2ArHJIuI6zkg3QmJez2eV/bN1uMHZBlkDaetKVNfCTndqnREgycxBDOjJ/IDukFzZEWH14Vj9kxEBbMzyPdLsITpom/bQt7RoVTaLd6zik5yGdIOLXNpm31rS9m06RsH+1lVyMNpHM0U5kBcU6I2t4Uf5+hdXdSQdbOGtkjP0gfaiaBsqEtSPS+kZD9cf14kDENii7O+XgprUHYVEolxtTSPOA8kbYu2VVBacuqlJLL3nlB7I8+yZDT3gcGgsKYBCpRtjYPeFoSkav1EVRiuJNRMlhWJBpFfivEwub2yU8Uoxx0F8qivKq0HlsHsmzf02enLchYsI9McNOf5V7A9/0/Q5UQPwYt3wtTmMh+Mm8jM/vsp997kjc7JYspImIPQGTrY2tyj7+opSrFtqFkVXhbUOucbD++uaaN8pjdhN+79z+rBKy7QKTxmsmU6aEGKTjZr1C3KFQjFbtsnQSa5Iq7twpsvaCLLRumQQWR6Azs6MWQY/5O7S5QnIfNDLN5QKJeruX6wpSg97MRRfrMVOPAXIuCcVFFtXVq8/3OYoIfURkdyKwGMWYgRwD7AnzxAk4IWTq4wsKKYLFxjeHjt8R2UiOiMb97eC7vQq1syLaX1k0c+bB11mTb2Ey4bmt9Q="
+  file: dist/js/crossman.min.js
+  skip_cleanup: true
+  on:
+    repo: sj-js/crossman
+    branch: master
