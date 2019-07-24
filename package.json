@@ -28,6 +28,9 @@
     "gulp-uglify": "^1.5.1",
     "gulp-uglifycss": "^1.0.5",
     "gulp-webserver": "^0.9.1",
-    "jshint": "^2.9.3"
+    "jshint": "^2.9.3",
+    "lodash": "4.17.13",
+    "lodash.template": "4.5.0",
+    "open": "6.0.0"
   }
 }
