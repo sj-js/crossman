@@ -1,9 +1,9 @@
 language: node_js
 node_js: 11.10.0
 os:
-- linux
+  - linux
 before_script:
-- npm install -g gulp
+  - npm install -g gulp
 script: gulp
 
 cache:
