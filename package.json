@@ -1,10 +1,15 @@
 {
   "name": "crossman",
-  "version": "1.0.0",
-  "description": "crossman is javascript library to cross browser",
-  "main": "",
+  "version": "1.0.2",
+  "description": "crossman is JavaScript Util for Cross-Browsing",
+  "main": "./index.js",
   "author": "souljungkim@gmail.com",
   "license": "MIT",
+  "scripts": {
+    "build": "gulp",
+    "deploy": "npm publish",
+    "gitk": "gitk"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/sj-js/crossman.git",
