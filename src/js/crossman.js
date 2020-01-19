@@ -18,21 +18,21 @@ function getEl(id){
     var el;
     if (id != null)
         el = (typeof id == 'object') ? id : document.getElementById(id);
-    else
-        el = document;
+    // else
+    //     el = document;
     return new CrossMan(el);
 }
 
-function newEl(elementName, attributes, inner){
-    if (!elementName)
+function newEl(tagName, attributes, inner){
+    if (!tagName)
         throw 'No Name!!!';
     var newElement;
-    if (elementName.indexOf('<') == 0){
+    if (tagName.indexOf('<') == 0){
         var p = document.createElement('p');
-        p.innerHTML = elementName;
+        p.innerHTML = tagName;
         newElement = p.children[0];
     }else{
-        newElement = document.createElement(elementName);
+        newElement = document.createElement(tagName);
     }
     // 속성
     for (var attrNm in attributes){
@@ -42,6 +42,11 @@ function newEl(elementName, attributes, inner){
     if (inner)
         newElement.innerHTML = inner;
     return new CrossMan(newElement);
+}
+
+function searchEl(query){
+    var elementList = document.querySelectorAll(query);
+    return new CrossMan(elementList);
 }
 
 function cloneEl(id, modeDeep){
@@ -86,7 +91,6 @@ function getData(data){
  ***************************************************************************/
 function CrossMan(element){
     this.el = element;
-
     var that = this;
 
     /*************************
@@ -279,22 +283,24 @@ CrossMan.prototype.removeClass = function(clazz){
  * append
  *************************/
 CrossMan.prototype.add = function(appender){
-    if (appender instanceof Array){
+    if (appender instanceof Array || appender instanceof NodeList){
         for (var i=0; i<appender.length; i++){
             this.add(appender[i]);
         }
         return this;
     }
-    if (appender instanceof CrossMan)
-        this.el.appendChild(appender.returnElement());
-    else if (typeof appender == 'object')
-        this.el.appendChild(appender);
-    else
-        this.el.appendChild( document.createTextNode((appender)?appender:'') );
+    if (appender){
+        if (appender instanceof CrossMan)
+            this.add(appender.returnElement());
+        else if (typeof appender == 'object')
+            this.el.appendChild(appender);
+        else
+            this.el.appendChild( document.createTextNode((appender)?appender:'') );
+    }
     return this;
 };
 CrossMan.prototype.addln = function(appender){
-    if (appender instanceof Array){
+    if (appender instanceof Array || appender instanceof NodeList){
         for (var i=0; i<appender.length; i++){
             this.addln(appender[i]);
         }
@@ -302,7 +308,7 @@ CrossMan.prototype.addln = function(appender){
     }
     if (appender){
         if (appender instanceof CrossMan)
-            this.el.appendChild(appender.returnElement());
+            this.add(appender.returnElement());
         else if (typeof appender == 'object')
             this.el.appendChild(appender);
         else
@@ -325,7 +331,18 @@ CrossMan.prototype.addEl = function(appender){
     return this;
 };
 CrossMan.prototype.addAsFirst = function(appender){
-    this.el.insertBefore(appender, this.el.firstChild);
+    if (appender instanceof Array || appender instanceof NodeList){
+        for (var i=appender.length -1; i>-1; i--){
+            this.addAsFirst(appender[i]);
+        }
+        return this;
+    }
+    if (appender instanceof CrossMan)
+        this.addAsFirst(appender.returnElement());
+    else if (typeof appender == 'object')
+        this.el.insertBefore(appender, this.el.firstChild);
+    else
+        this.el.insertBefore(document.createTextNode((appender)?appender:''), this.el.firstChild);
     return this;
 };
 CrossMan.prototype.addFrontOf = function(node, sibling){
@@ -350,16 +367,35 @@ CrossMan.prototype.appendToFrontOf = function(target){
     target.parentNode.insertBefore(this.el, target);
     return this;
 };
+CrossMan.prototype.appendToNextOf = function(target){
+    if (typeof parent == 'string')
+        target = document.getElementById(target);
+    target.parentNode.insertBefore(this.el, target.nextSibling);
+    return this;
+};
 
-CrossMan.prototype.del = function(removeElObj){
-    this.el.removeChild(removeElObj);
+CrossMan.prototype.remove = function(removeElObj){
+    if (removeElObj instanceof Array || removeElObj instanceof NodeList){
+        for (var i=0; i<removeElObj.length; i++){
+            this.remove(removeElObj[i]);
+        }
+        return this;
+    }
+    if (removeElObj && removeElObj.parentNode)
+        removeElObj.parentNode.removeChild(removeElObj);
     return this;
 };
+CrossMan.prototype.del = CrossMan.prototype.remove;
 CrossMan.prototype.removeFromParent = function(){
-    if (this.el && this.el.parentNode)
-        this.el.parentNode.removeChild(this.el);
+    return this.remove(this.el);
+};
+CrossMan.prototype.deleteAll = function(){
+    if (this.el instanceof Array){
+        this.el = [];
+    }
     return this;
 };
+
 
 
 /*************************
@@ -690,7 +726,26 @@ CrossMan.prototype.forChildren = function(functionForLoop){
     }
 };
 
+CrossMan.prototype.each = function(closure){
+    getData(this.el).each(closure);
+    return this;
+};
 
+CrossMan.prototype.any = function(closure){
+    getData(this.el).some(closure);
+    return this;
+};
+
+CrossMan.prototype.some = CrossMan.prototype.any;
+
+
+CrossMan.prototype.getChildEl = function(child){
+    var childElement = null;
+    if (typeof child == 'number'){
+        childElement = this.el.children[child];
+    }
+    return getEl(childElement);
+}
 
 
 /*************************
@@ -726,9 +781,11 @@ CrossMan.prototype.showDiv = function(){
     return this;
 };
 CrossMan.prototype.getNewSeqId = function(idStr){
-    for (var seq=1; seq < 50000; seq++){
-        var searchEmptyId = idStr + seq
-        if (!(searchEmptyId in this.el)) return searchEmptyId;
+    for (var seq=1; seq<99999; seq++){
+        var searchEmptyId = idStr + seq;
+        if (!(searchEmptyId in this.el))
+        // if (!document.getElementById(searchEmptyId))
+            return searchEmptyId;
     }
     return null;
 };
@@ -769,6 +826,23 @@ CrossMan.prototype.find = function(param){
         return matchedObj;
     }
 };
+CrossMan.prototype.findAll = function(finder){
+    var resultList = [];
+    if (this.el instanceof Array){
+        for (var i=0; i<this.el.length; i++){
+            var found = getEl(this.el[i]).find(finder);
+            if (found != null)
+                resultList.push(found);
+        }
+    }else if (typeof this.el == 'object'){
+        for (var property in this.el){
+            var found = getEl(this.el[property]).find(finder);
+            if (found != null)
+                resultList.push(found);
+        }
+    }
+    return resultList
+};
 
 // Param==Array => Or조건
 // Param==Object => 해당조건
@@ -776,34 +850,48 @@ CrossMan.prototype.getMatchedObjWithParam = function(obj, param){
     if (typeof param == 'string'){
         param = {id:param};
     }
-    if (param instanceof Array){
+    if (param instanceof Function){
+        return (param(obj)) ? obj : null;
+    }else if (param instanceof Array){
         for (var i=0; i<param.length; i++){
-            if (this.find(param[i]))
+            if (this.find(param[i])) //TODO: 좀 이상한 거 같은데?? findAll을 최종형으로 보면 될까??
                 return obj;
         }
-        return; //No Matching
-    }
-    if (param instanceof Object){
+        return null; //No Matching
+    }else if (param instanceof Object){
         var keys = Object.keys(param);
-        for (var i=0; i<keys.length; i++){
-            var key = keys[i];
+        for (var i=0, key; i<keys.length; i++){
+            key = keys[i];
             var attributeValue = obj[key];
             var conditionValue = param[key];
-            if ( attributeValue && (attributeValue == conditionValue || CrossMan.prototype.checkMatchingWithExpression(attributeValue, conditionValue)) ){
-            }else{
-                return; //No Matching
+            //- Object Condition안에 value가 Array이면 OR조건으로 Maching여부를 알아낸다.
+            //TODO: 실제값도 Array일 경우는 어떻게 할까나..?...
+            conditionValue = (conditionValue instanceof Array) ? conditionValue : [conditionValue];
+            var checkFlag = false;
+            for (var jj=0; jj<conditionValue.length; jj++){
+                if ( attributeValue && (attributeValue == conditionValue[jj] || CrossMan.checkMatchingWithExpression(attributeValue, conditionValue[jj])) ){
+                    checkFlag = true;
+                    break;
+                }
             }
+            if (!checkFlag)
+                return null; //No Matching
         }
         return obj;
     }
 };
-CrossMan.prototype.checkMatchingWithExpression = function(value, condition){
+CrossMan.checkMatchingWithExpression = function(value, condition){
     var result;
     if (value && condition){
+        //- Function으로
+        if (condition instanceof Function)
+            return !!condition(value);
+        //- 일반상황
         var tempCondition;
         var exclamationFlag;
-        exclamationFlag = (condition.indexOf('!') == 0);
-        tempCondition = condition.substr( (exclamationFlag)?1:0 );
+        var conditionStr = (condition+'');
+        exclamationFlag = (conditionStr.indexOf('!') == 0);
+        tempCondition = conditionStr.substr( (exclamationFlag)?1:0 );
         tempCondition = tempCondition.replace('.', '[.]');
         var splitCondition = tempCondition.split("*");
         var regExpCondition = splitCondition.join('.*');
@@ -814,25 +902,7 @@ CrossMan.prototype.checkMatchingWithExpression = function(value, condition){
     return result;
 };
 
-CrossMan.prototype.findAll = function(finder){
-    var resultList = [];
-    if (this.el instanceof Array){
-        for (var i=0; i<this.el.length; i++){
-            var data = this.el[i];
-            var found = getEl(data).find(finder);
-            if (found != null)
-                resultList.push(found);
-        }
-    }else if (typeof this.el == 'object'){
-        for (var dataCode in CrossMan.prototype.dataPool){
-            var data = this.el[dataCode];
-            var found = getEl(data).find(finder);
-            if (found != null)
-                resultList.push(found);
-        }
-    }
-    return resultList
-};
+
 
 
 // Find HTMLDOMElement
@@ -872,7 +942,7 @@ CrossMan.prototype.getMatchedDomAttributeWithParam = function(obj, param){
             var attributeValue = obj.getAttribute(key);
             var conditionValue = param[key];
 //                if ( !(obj.getAttribute(domAttrPrefix + key) && obj.getAttribute(domAttrPrefix + key) == param[key]) ){
-            if ( attributeValue && attributeValue == conditionValue || CrossMan.prototype.checkMatchingWithExpression(attributeValue, conditionValue)){
+            if ( attributeValue && attributeValue == conditionValue || CrossMan.checkMatchingWithExpression(attributeValue, conditionValue)){
             }else{
                 return; //No Matching
             }
@@ -926,23 +996,33 @@ CrossMan.prototype.findParentEl = function(attr, val){
  * IE11 & others : document.body.scrollLeft
  *****/
 CrossMan.prototype.getBodyScrollX = function(event){
-    var bodyPageX = 0;
-    if (document.documentElement && document.documentElement.scrollLeft)
-        bodyPageX = document.documentElement.scrollLeft;
-    if (window.pageXOffset)
-        bodyPageX = window.pageXOffset;
-    if (document.body && document.body.scrollLeft)
-        bodyPageX = document.body.scrollLeft;
+    var standardElement = this.el ? this.el : document;
+    if (standardElement == document){
+        var bodyPageX = 0;
+        if (document.documentElement && document.documentElement.scrollLeft)
+            bodyPageX = document.documentElement.scrollLeft;
+        if (window.pageXOffset)
+            bodyPageX = window.pageXOffset;
+        if (document.body && document.body.scrollLeft)
+            bodyPageX = document.body.scrollLeft;
+    }else{
+        bodyPageX = this.el.scrollLeft;
+    }
     return bodyPageX;
 };
 CrossMan.prototype.getBodyScrollY = function(event){
-    var bodyPageY = 0;
-    if (document.documentElement && document.documentElement.scrollTop)
-        bodyPageY = document.documentElement.scrollTop;
-    if (window.pageYOffset)
-        bodyPageY = window.pageYOffset;
-    if (document.body && document.body.scrollTop)
-        bodyPageY = document.body.scrollTop;
+    var standardElement = this.el ? this.el : document;
+    if (standardElement == document){
+        var bodyPageY = 0;
+        if (document.documentElement && document.documentElement.scrollTop)
+            bodyPageY = document.documentElement.scrollTop;
+        if (window.pageYOffset)
+            bodyPageY = window.pageYOffset;
+        if (document.body && document.body.scrollTop)
+            bodyPageY = document.body.scrollTop;
+    }else{
+        bodyPageY = this.el.scrollTop;
+    }
     return bodyPageY;
 };
 /*****
@@ -950,15 +1030,20 @@ CrossMan.prototype.getBodyScrollY = function(event){
  * IE구버전 : document.documentElement.offsetWidth
  * IE11 & others : document.body.offsetWidth
  *****/
-CrossMan.prototype.getBodyOffsetX = function(event){
-    var bodyOffsetX = 0;
-    if (document.documentElement && document.documentElement.offsetWidth)
-        return document.documentElement.offsetWidth;
-    if (document.body && document.body.offsetWidth)
-        return document.body.offsetWidth;
+CrossMan.prototype.getBodyOffsetX = function(event){ //TODO: 뭔가 잘못 됐네.. 크기와 위치 개념정리 필요
+    var standardElement = this.el ? this.el : document;
+    if (standardElement == document){
+        var bodyOffsetX = 0;
+        if (document.documentElement && document.documentElement.offsetWidth)
+            return document.documentElement.offsetWidth;
+        if (document.body && document.body.offsetWidth)
+            return document.body.offsetWidth;
+    }else{
+        this.el.offsetLeft;
+    }
     return bodyOffsetX;
 };
-CrossMan.prototype.getBodyOffsetY = function(event){
+CrossMan.prototype.getBodyOffsetY = function(event){ //TODO: 뭔가 잘못 됐네.. 크기와 위치 개념정리 필요
     var bodyOffsetY = 0;
     if (document.documentElement && document.documentElement.offsetHeight)
         return document.documentElement.offsetHeight;
@@ -976,35 +1061,40 @@ CrossMan.prototype.getBoundingClientRect = function(){
 };
 /* 눈에 보이는 좌표 값 (객체마다  DOM TREE구조와 position의 영향을 받기 때문에, 다른 계산이 필요하여 만든 함수)
  * 재료는 DOM객체 */
-CrossMan.prototype.getBoundingPageRect = function(){
+CrossMan.prototype.getBoundingPageRect = function(){ //TODO: 지금 이게 조금 유력!??
     var sumOffsetLeft = 0;
     var sumOffsetTop = 0;
     var thisObj = this.el;
     var parentObj = this.el.parentNode;
-    while(parentObj){
-        var scrollX = 0;
-        var scrollY = 0;
-        if (thisObj != document.body){
-            scrollX = thisObj.scrollLeft;
-            scrollY = thisObj.scrollTop;
-        }
-        if (parentObj.style){
-            if (parentObj.style.position == 'absolute') {
-                sumOffsetLeft += thisObj.offsetLeft - scrollX;
-                sumOffsetTop += thisObj.offsetTop - scrollY;
-            }else if(parentObj.style.position == 'fixed' || thisObj.style.position == 'fixed'){
-                sumOffsetLeft += thisObj.offsetLeft + this.getBodyScrollX();
-                sumOffsetTop += thisObj.offsetTop + this.getBodyScrollY();
-                break;
-            }else{
-                sumOffsetLeft += (thisObj.offsetLeft - parentObj.offsetLeft) - scrollX;
-                sumOffsetTop += (thisObj.offsetTop - parentObj.offsetTop) - scrollY;
+    if (thisObj.style && thisObj.style.position == 'fixed'){
+        sumOffsetLeft += thisObj.offsetLeft + getEl(document).getBodyScrollX();
+        sumOffsetTop += thisObj.offsetTop + getEl(document).getBodyScrollY();
+    }else{
+        while(parentObj){
+            var scrollX = 0;
+            var scrollY = 0;
+            if (thisObj != document.body){
+                scrollX = thisObj.scrollLeft;
+                scrollY = thisObj.scrollTop;
             }
-        }else{
-            break;
+            if (parentObj.style){
+                if (parentObj.style.position == 'absolute') {
+                    sumOffsetLeft += thisObj.offsetLeft - scrollX;
+                    sumOffsetTop += thisObj.offsetTop - scrollY;
+                }else if(parentObj.style.position == 'fixed'){
+                    sumOffsetLeft += thisObj.offsetLeft + (parentObj.offsetLeft + getEl(document).getBodyScrollX());
+                    sumOffsetTop += thisObj.offsetTop + (parentObj.offsetTop + getEl(document).getBodyScrollY());
+                    break;
+                }else{
+                    sumOffsetLeft += (thisObj.offsetLeft - parentObj.offsetLeft) - scrollX;
+                    sumOffsetTop += (thisObj.offsetTop - parentObj.offsetTop) - scrollY;
+                }
+            }else{
+                break;
+            }
+            thisObj = parentObj;
+            parentObj = parentObj.parentNode;
         }
-        thisObj = parentObj;
-        parentObj = parentObj.parentNode;
     }
     var objBodyOffset = {
         left:sumOffsetLeft,
@@ -1195,8 +1285,8 @@ CrossMan.Data.prototype.count = function(checkThing, allowOverlapping){
 };
 
 CrossMan.Data.prototype.each = function(closure){
-    if (this.data instanceof Array){
-        for (var i=0; i<this.data.length; i++){
+    if (this.data instanceof Array || this.data instanceof NodeList){
+        for (var i = 0; i < this.data.length; i++){
             if (closure(this.data[i], i) == false)
                 break;
         }
@@ -1259,7 +1349,7 @@ CrossMan.Data.prototype.every = function(closure){
 };
 
 CrossMan.Data.prototype.any = function(closure){
-    if (this.data instanceof Array){
+    if (this.data instanceof Array || this.data instanceof NodeList){
         for (var i=0; i<this.data.length; i++){
             if (closure(this.data[i], i))
                 return true;
@@ -1343,26 +1433,28 @@ CrossMan.Data.prototype.parse = function(){
 CrossMan.Data.prototype.findHighestZIndex = function(tagName){
     var highestIndex = 0;
     //Makes parameter array
-    if (!tagName){
-        tagName = ['div'];
-    }else if (typeof tagName == 'string'){
+    if (!tagName)
+        tagName = 'div';
+    if (typeof tagName == 'string')
         tagName = [tagName];
-    }
     //Search
     if (tagName instanceof Array){
-        for (var i=0; i<tagName.length; i++){
-            var elementList = document.getElementsByTagName(tagName[0]);
-            for (var i=0; i<elementList.length; i++){
-                var zIndex = document.defaultView.getComputedStyle(elementList[i], null).getPropertyValue("z-index");
-                if (zIndex > highestIndex && zIndex != 'auto'){
-                    highestIndex = zIndex;
+        for (var i=0, elementList; i<tagName.length; i++){
+            elementList = document.getElementsByTagName(tagName[i]);
+            for (var j=0, zIndex; j<elementList.length; j++){
+                // zIndex = document.defaultView.getComputedStyle(elementList[j], null).getPropertyValue("z-index");
+                zIndex = window.getComputedStyle(elementList[j], null).getPropertyValue("z-index");
+                if (zIndex != 'auto'){
+                    var parsedZIndex = parseInt(zIndex);
+                    if (parsedZIndex > highestIndex)
+                        highestIndex = parsedZIndex;
                 }
             }
         }
     }else{
         console.log('Could not get highest z-index. because, not good parameter', tagName);
     }
-    return parseInt(highestIndex);
+    return highestIndex;
 };
 
 CrossMan.Data.prototype.getContextPath = function(){
@@ -2139,8 +2231,10 @@ if (!String.prototype.trim) {
 try{
     module.exports = exports = {
         ready:ready,
-        newEl:newEl,
         getEl:getEl,
+        newEl:newEl,
+        searchEl:searchEl,
+        cloneEl:cloneEl,
         getData:getData,
         getXHR:getXHR,
         SjEvent:SjEvent

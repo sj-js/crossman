@@ -33,18 +33,18 @@ var src = 'src';
 var dest = 'dist';
 var fileSuffix = '.min';
 var paths = {
-	"src":{
-		"js"	: [src+'/lib/**/*.js', src+'/js/**/*.js'],
-		"css"	: [src+'/lib/**/*.css', src+'/css/**/*.css'],
-		"res"	: src+'/res/**/*',
-		"html"	: src+'/**/*.html'
-	},
-	"dest":{
-		"js"	: dest+'/js',
-		"css"	: dest+'/css',	
-		"res"	: dest+'/res',
-		"html"	: dest+'/'		
-	}	
+    "src":{
+        "js"	: [src+'/lib/**/*.js', src+'/js/**/*.js'],
+        "css"	: [src+'/lib/**/*.css', src+'/css/**/*.css'],
+        "res"	: src+'/res/**/*',
+        "html"	: src+'/**/*.html'
+    },
+    "dest":{
+        "js"	: dest+'/js',
+        "css"	: dest+'/css',
+        "res"	: dest+'/res',
+        "html"	: dest+'/'
+    }
 };
 
 
@@ -70,12 +70,17 @@ gulp.task('clean-res', function(){
         .pipe(clean());
 });
 
+/** Before **/
+var packageName = package.name;
+var indexForSlash = packageName.indexOf('/');
+var packageFileName = (indexForSlash > 0) ? packageName.substring(indexForSlash +1) : package.name;
+
 /** js **/
 gulp.task('js', function(){
     return gulp.src(paths.src.js)
             .pipe(jshint())
             .pipe(jshint.reporter('default'))
-            .pipe(concat(package.name +'.js'))
+            .pipe(concat(packageFileName +'.js'))
             .pipe(gulp.dest(paths.dest.js))
             .pipe(stripDebug())
             .pipe(uglify({mangle:{toplevel:false}}))
@@ -88,7 +93,7 @@ gulp.task('css', function(){
     return gulp.src(paths.src.css)
             .pipe(csslint())
             .pipe(csslint.formatter("compact"))
-            .pipe(concatcss(package.name +'.css'))
+            .pipe(concatcss(packageFileName +'.css'))
             .pipe(gulp.dest(paths.dest.css))
             .pipe(uglifycss())
             .pipe(rename({suffix:fileSuffix}))
@@ -111,8 +116,8 @@ gulp.task('html', function(){
 /** server **/
 // 웹서버를 localhost:8000 로 실행한다.
 gulp.task('server', function(){
-	return gulp.src(dest + '/')
-		.pipe(webserver());
+    return gulp.src(dest + '/')
+        .pipe(webserver());
 });
 
 
@@ -120,22 +125,22 @@ gulp.task('server', function(){
 /** watch **/
 // 파일 변경 감지 및 브라우저 재시작
 gulp.task('watch', function () {
-	livereload.listen();
-	gulp.watch(paths.src.js, ['js']);
-	gulp.watch(paths.src.css, ['css']);
-	gulp.watch(paths.src.html, ['html']);
-	gulp.watch(paths.src.res, ['res']);
-	gulp.watch(dest + '/**').on('change', livereload.changed);
+    livereload.listen();
+    gulp.watch(paths.src.js, ['js']);
+    gulp.watch(paths.src.css, ['css']);
+    gulp.watch(paths.src.html, ['html']);
+    gulp.watch(paths.src.res, ['res']);
+    gulp.watch(dest + '/**').on('change', livereload.changed);
 });
 
 
 /** bower **/
 gulp.task('bower-install', function(){
-	return bower();
+    return bower();
 });
 
 gulp.task('bower-update', function(){
-	return bower({cmd:'update'});
+    return bower({cmd:'update'});
 });
 
 
@@ -143,13 +148,13 @@ gulp.task('bower-update', function(){
 /** shell **/
 // 마지막으로 원하는 쉘을 실행!
 gulp.task('shell', shell.task([
-	'echo "Lets Start Development"', 	
-	'start /max http://localhost:8000/'
+    'echo "Lets Start Development"',
+    'start /max http://localhost:8000/'
 ]));
 gulp.task('run', shell.task([
-	'node index.js &',
-	'echo "Lets Start Development"', 
-	'start /max http://localhost:5000/'
+    'node index.js &',
+    'echo "Lets Start Development"',
+    'start /max http://localhost:5000/'
 ]));
 
 
