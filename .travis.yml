@@ -15,11 +15,17 @@ before_deploy:
   - ls dist/js/
   
 deploy:
-  provider: releases
-  api_key:
-    secure: "bQlcg54zbBhNO6u5Qjd2bG7zMQYYG/hDV0EH/Uvm7PQKvKc8NgpDi1XD6JuJhtUiExIhHfbvIrC0ZWv6aGbMXQKWSzE7EXmIw5vyjiI17PVPDsTHvb+33TdG3m9H96kNvZKi31Ds2C/Xn18Igq470bObcHG/h/mKDtOPjTS0EbKRFgaH/J+mTZn4bv2r/b3HKu9NDnWfa8w3Fp1pljA4yfDbhb9hI9oGDQsBb8pXQelmBAg7BqLLSkCPrvfmoDKtfIlrDP+fEk7yNwMzCS56v3GKslQs0+TMX7EAJn9j0TJrckoHwpzBS3Ap1m08pyALOWlILmPAvf3j2isPoVDnL1XpYoucW/retf8xE2M4TRZxnLOD9CZ2EuunJSDVjsTukuO2qcmfV/+Vx3ByunBymCuIdRZMl1CRaZa1zuPekjFQPNHhGNLohLIjmWujnbNFZkpSxrkJE/a0cfCdZYezORg9fyKceGhOBdxNGiH+QcuaNhEm3t/Kk2q5kimfcrCWwyLrLeRQ86LmzeLIzsTJXLq1JLYDV/6aiPIosNmfaxYdKEy35C1u/hSM7Wvflmgmqu+cN3LsUmCTr7B71nW9On2/U7+QISXipZHdZ4RWzctYI1QUM9YXfQUhgUgrV/nLT3r5jnEthjlGbek2Ap8wpQz8MCeFxhYX2JA7Lr+MZrs="
-  file: dist/js/crossman.min.js
-  skip_cleanup: true
-  on:
-    repo: sj-js/crossman
-    branch: master
+  - provider: releases
+    api_key:
+      secure: "bQlcg54zbBhNO6u5Qjd2bG7zMQYYG/hDV0EH/Uvm7PQKvKc8NgpDi1XD6JuJhtUiExIhHfbvIrC0ZWv6aGbMXQKWSzE7EXmIw5vyjiI17PVPDsTHvb+33TdG3m9H96kNvZKi31Ds2C/Xn18Igq470bObcHG/h/mKDtOPjTS0EbKRFgaH/J+mTZn4bv2r/b3HKu9NDnWfa8w3Fp1pljA4yfDbhb9hI9oGDQsBb8pXQelmBAg7BqLLSkCPrvfmoDKtfIlrDP+fEk7yNwMzCS56v3GKslQs0+TMX7EAJn9j0TJrckoHwpzBS3Ap1m08pyALOWlILmPAvf3j2isPoVDnL1XpYoucW/retf8xE2M4TRZxnLOD9CZ2EuunJSDVjsTukuO2qcmfV/+Vx3ByunBymCuIdRZMl1CRaZa1zuPekjFQPNHhGNLohLIjmWujnbNFZkpSxrkJE/a0cfCdZYezORg9fyKceGhOBdxNGiH+QcuaNhEm3t/Kk2q5kimfcrCWwyLrLeRQ86LmzeLIzsTJXLq1JLYDV/6aiPIosNmfaxYdKEy35C1u/hSM7Wvflmgmqu+cN3LsUmCTr7B71nW9On2/U7+QISXipZHdZ4RWzctYI1QUM9YXfQUhgUgrV/nLT3r5jnEthjlGbek2Ap8wpQz8MCeFxhYX2JA7Lr+MZrs="
+    file: dist/js/crossman.min.js
+    skip_cleanup: true
+    on:
+      repo: sj-js/crossman
+      branch: master
+  - provider: npm
+    email: "$NPM_EMAIL"
+    api_key: "$NPM_API_TOKEN"
+    skip_cleanup: true
+    on:
+      branch: master
