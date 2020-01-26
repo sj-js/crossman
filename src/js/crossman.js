@@ -1470,8 +1470,27 @@ CrossMan.Data.prototype.getContextPath = function(){
  *  StorageMan
  *  Created By sujkim
  ****************************************************************************************************/
+CrossMan.Data.prototype.load = function(callback){
+    var saveKey = this.saveKey = this.data;
+    var value = this.getWithLocalStorage(saveKey);
+    if (callback){
+        var returnValue = callback(value);
+        if (returnValue != null)
+            this.data = returnValue;
+    }else{
+        this.data = value;
+    }
+    return this;
+};
+
+CrossMan.Data.prototype.save = function(value){
+    var saveKey = this.saveKey = this.data;
+    this.setWithLocalStorage(saveKey, value);
+    return this;
+};
+
 CrossMan.Data.prototype.getWithLocalStorage = function(saveKey){
-    var val = this.getString(saveKey);
+    var val = this.getStringWithLocalStorage(saveKey);
     this.data = val;
     if (val && (val.indexOf('[') == 0 || val.indexOf('{') == 0))
         return JSON.parse(val);
@@ -1740,8 +1759,11 @@ function SjEvent(){
  *
  *************************/
 SjEvent.prototype.addEventListener = function(element, eventName, eventFunc){
+    return this.addEventListenerById(element, eventName, eventFunc);
+};
+SjEvent.prototype.addEventListenerById = function(id, eventName, eventFunc){
     var hasEvent = false;
-    var hasId = (element != null);
+    var hasId = (id != null);
     var hasEventName = (eventName != null);
     var hasEventFunc = (eventFunc != null);
     if (hasEventFunc){
@@ -1752,17 +1774,17 @@ SjEvent.prototype.addEventListener = function(element, eventName, eventFunc){
 
     if (hasId){
         //Get Element ID
-        var elementId = '';
-        if (element instanceof Element){
-            elementId = element.id;
-        }else if (typeof element == 'string' && element != ''){
-            elementId = element
+        var eventId = '';
+        if (id instanceof Element){
+            eventId = id.id;
+        }else if (typeof id == 'string' && id != ''){
+            eventId = id
         }
         //Add Object Event
         if (hasEventName && hasEventFunc){
-            if (!this.objectEventMap[elementId])
-                this.objectEventMap[elementId] = {};
-            this.addEvent(this.objectEventMap[elementId], eventName, eventFunc);
+            if (!this.objectEventMap[eventId])
+                this.objectEventMap[eventId] = {};
+            this.addEvent(this.objectEventMap[eventId], eventName, eventFunc);
         }
     }else{
         //Add Global Event
@@ -1771,7 +1793,7 @@ SjEvent.prototype.addEventListener = function(element, eventName, eventFunc){
     }
 
     //Special Event (After Add)
-    this.addSpecialEvent(element, eventName);
+    this.addSpecialEvent(id, eventName);
     return this;
 };
 SjEvent.prototype.addEventListenerByEventName = function(eventName, eventFunc){
@@ -1800,21 +1822,24 @@ SjEvent.prototype.addSpecialEvent = function(element, eventName){
  *
  *************************/
 SjEvent.prototype.hasEventListener = function(element, eventName, eventFunc){
+    return this.hasEventListenerById(element, eventName, eventFunc);
+};
+SjEvent.prototype.hasEventListenerById = function(id, eventName, eventFunc){
     var hasEvent = false;
-    var hasId = (element != null);
+    var hasId = (id != null);
     var hasEventName = (eventName != null);
     var hasEventFunc = (eventFunc != null);
     if (hasId){
         //Get Element ID
-        var elementId = '';
-        if (element instanceof Element){
-            elementId = element.id;
-        }else if (typeof element == 'string' && element != ''){
-            elementId = element;
+        var eventId = '';
+        if (id instanceof Element){
+            eventId = id.id;
+        }else if (typeof id == 'string' && id != ''){
+            eventId = id;
         }
         //Check Object Event
         if (hasEventName){
-            var eventMapForObject = this.objectEventMap[elementId];
+            var eventMapForObject = this.objectEventMap[eventId];
             if (eventMapForObject != null){
                 for (var name in eventMapForObject){
                     if (name == eventName)
@@ -1894,21 +1919,24 @@ SjEvent.prototype.hasEventFunc = function(eventMap, eventFunc){
  *
  *************************/
 SjEvent.prototype.removeEventListener = function(element, eventName, eventFunc){
+    return this.removeEventListenerById(element, eventName, eventFunc);
+};
+SjEvent.prototype.removeEventListenerById = function(id, eventName, eventFunc){
     var result = false;
-    var hasId = (element != null);
+    var hasId = (id != null);
     var hasEventName = (eventName != null);
     var hasEventFunc = (eventFunc != null);
     if (hasId){
         //Get Element ID
-        var elementId = '';
-        if (element instanceof Element){
-            elementId = element.id;
-        }else if (typeof element == 'string' && element != ''){
-            elementId = element
+        var eventId = '';
+        if (id instanceof Element){
+            eventId = id.id;
+        }else if (typeof id == 'string' && id != ''){
+            eventId = id
         }
         //Remove Object Event
-        if (hasEventName && elementId != ''){
-            var eventMapForObject = this.objectEventMap[elementId];
+        if (hasEventName && eventId != ''){
+            var eventMapForObject = this.objectEventMap[eventId];
             if (eventMapForObject != null){
                 for (var name in eventMapForObject){
                     if (name == eventName)
@@ -1990,24 +2018,28 @@ SjEvent.prototype.removeEventFunc = function(eventMap, eventFunc){
  *
  *************************/
 SjEvent.prototype.execEventListener = function(element, eventName, event){
-    var resultForGlobal;
-    var resultForObject;
     //Exec Global Event
-    resultForGlobal = this.execEvent(this.globalEventMap, eventName, event);
+    var resultForGlobal = this.execEvent(this.globalEventMap, eventName, event);
     //Exec Object Event
-    if (element != null){
+    var resultForObject = this.execEventListenerById(element, eventName, event);
+    return (resultForGlobal || resultForObject);
+};
+SjEvent.prototype.execEventListenerById = function(id, eventName, event){
+    var resultForObject;
+    //Exec Object Event
+    if (id != null){
         //Get Element ID
-        var elementId = '';
-        if (element instanceof Element){
-            elementId = element.id;
-        }else if (typeof element == 'string' && element != ''){
-            elementId = element
+        var eventId = '';
+        if (id instanceof Element){
+            eventId = id.id;
+        }else if (typeof id == 'string' && id != ''){
+            eventId = id
         }
         //Exec Event
-        if (elementId != '')
-            resultForObject = this.execEvent(this.objectEventMap[elementId], eventName, event);
+        if (eventId != '')
+            resultForObject = this.execEvent(this.objectEventMap[eventId], eventName, event);
     }
-    return (resultForGlobal || resultForObject);
+    return resultForObject;
 };
 SjEvent.prototype.execEventListenerByEventName = function(eventName, event){
     var resultOnGlobal;
