@@ -5,7 +5,7 @@
 [![Release](https://img.shields.io/github/release/sj-js/crossman.svg)](https://github.com/sj-js/crossman/releases)
 [![License](https://img.shields.io/github/license/sj-js/crossman.svg)](https://github.com/sj-js/crossman/releases)
 
-- sj-js의 기반이 되는 `Util & Framework`로서 제작되고 있습니다. 
+- **sj-js**의 기반이 되는 `Util & Framework`로서 제작되고 있습니다. 
 - `CrossBrowsing`과 `쉬운 인터페이스` 구현을 목표로 합니다.
 - ✨ Source: https://github.com/sj-js/crossman
 - ✨ Document: https://sj-js.github.io/sj-js/crossman
@@ -55,7 +55,7 @@
     npm i @sj-js/crossman
     ```
     ```js
-    const { ready, getEl, newEl, cloneEl, searchEl, getData, SjEvent } = require('@sj-js/crossman');
+    const { ready, getEl, newEl, cloneEl, searchEl, getData, SjEvent, getXHR, postXHR, putXHR, deleteXHR } = require('@sj-js/crossman');
     ```
 
 
@@ -71,10 +71,12 @@
     ```html
     <body>
         Hello CrossMan!<br/>
-        <span id="test-span" class="test-cls"></span>
+        <span id="test-span-1" class="test-cls">Hey?</span>
+        <span id="test-span-2" class="test-cls">Anybody</span>
+        <span id="test-span-3" class="test-cls">There??</span>
     </body>
     <script>
-        var testSpan = getEl('test-span').add('Hello??').style('color:white; background:black;').returnElement();
+        var testSpan = getEl('test-span-1').add('Hello??').style('color:white; background:black;').returnElement();
         testSpan.style.fontSize = '35px';
     </script>   
     ```
@@ -85,11 +87,13 @@
     ```html
     <body>
         Hello CrossMan!<br/>
-        <span id="test-span" class="test-cls"></span>
+        <span id="test-span-1" class="test-cls">Hey</span>
+        <span id="test-span-2" class="test-cls">Hey</span>
+        <span id="test-span-3" class="dev-cls">Hey</span>
+        <span id="test-span-4" class="test-cls">Hey</span>
     </body>
     <script>
-        var testSpan = searchEl('.test-cls').add('Hello??').style('color:white; background:black;').returnElement();
-        testSpan.style.fontSize = '35px';
+        searchEl('.test-cls').add('Hello??').style('color:white; background:black; font-size:35px;');
     </script>   
     ```
      
@@ -99,17 +103,18 @@
     ```html
     <style>
         div { border:1px solid black; margin:2px; }
+        button { border-radius:30px; height:20px; cursor:pointer; }
     </style>
     <body>
         Hello CrossMan!<br/>
     </body>
     <script>
         newEl('div').addClass(['test-container', 'outer']).style('width:100%;').add([
-            newEl('div').attr('id', 'top').html('[Top Something]<br/>'),
-            newEl('div').addClass('test-title').html('[TITLE] Hello? How about CrossMan?<br/>'),
-            newEl('div').addClass('test-content').add([
-                '[CONTENT] Hello? who are you?',
-                newEl('div').html('Why are you seeing it?for what').add([
+            newEl('div').attr('id', 'top').html('[TOP SOMETHING]'),
+            newEl('div').addClass('test-title').html('Hello? How about CrossMan?<br/>'),
+            newEl('div').addClass('test-content').style('border:3px dashed gray; color:white; background:black;').addln([
+                'Love all and all and all.. OK?',
+                newEl('span').html('Why are you seeing it? for what?').add([
                     newEl('button').html('SQUARE').addEventListener('click', function(){ 
                         getEl('top').add( 
                             newEl('span').style('display:inline-block; width:30px; height:30px;').setStyle('background', '#' +getData().randomColor()) 
@@ -214,14 +219,18 @@
     *@* *!* *@*
     ```html
     <body>
-        Example is not yet prepared!<br/>
+        <span id="test-span"></span>
     </body>
     <script>
         function Something(){
             this.sjEvent = new SjEvent();
         }
         var something = new Something();
-        something.sjEvent.addEventListenerByEventName('action', function(e){ /* .. */ });
-        something.sjEvent.execEventListenerByEventName('action', {type:1, data:'Hello?'});       
+        something.sjEvent.addEventListenerByEventName('action', function(e){ 
+            getEl('test-span').html(e.data); 
+        });
+        something.sjEvent.execEventListenerByEventName('action', {
+            type:1, data:'I know this is not enough explain.'
+        });       
     </script>   
     ```
