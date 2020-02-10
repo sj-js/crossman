@@ -362,13 +362,13 @@ CrossMan.prototype.appendToAsFirst = function(parent){
     return this;
 };
 CrossMan.prototype.appendToFrontOf = function(target){
-    if (typeof parent == 'string')
+    if (typeof target == 'string')
         target = document.getElementById(target);
     target.parentNode.insertBefore(this.el, target);
     return this;
 };
 CrossMan.prototype.appendToNextOf = function(target){
-    if (typeof parent == 'string')
+    if (typeof target == 'string')
         target = document.getElementById(target);
     target.parentNode.insertBefore(this.el, target.nextSibling);
     return this;
@@ -766,21 +766,21 @@ CrossMan.prototype.disableSelection = function(){
 
 
 
-CrossMan.prototype.hideDiv = function(){
+CrossMan.prototype.hideDiv = function(){ //TODO: 검토필요
     this.el.style.display = 'block';
     this.el.style.position = 'absolute';
     this.el.style.left = '-5555px';
     this.el.style.top = '-5555px';
     return this;
 };
-CrossMan.prototype.showDiv = function(){
+CrossMan.prototype.showDiv = function(){ //TODO: 검토필요
     this.el.style.display = 'block';
     this.el.style.position = 'absolute';
     this.el.style.left = '0px';
     this.el.style.top = '0px';
     return this;
 };
-CrossMan.prototype.getNewSeqId = function(idStr){
+CrossMan.prototype.getNewSeqId = function(idStr){ //TODO: 검토필요
     for (var seq=1; seq<99999; seq++){
         var searchEmptyId = idStr + seq;
         if (!(searchEmptyId in this.el))
@@ -1457,12 +1457,45 @@ CrossMan.Data.prototype.findHighestZIndex = function(tagName){
     return highestIndex;
 };
 
+//TODO: This is not good. It will be deleted.
 CrossMan.Data.prototype.getContextPath = function(){
     var offset=location.href.indexOf(location.host)+location.host.length;
     var ctxPath=location.href.substring(offset,location.href.indexOf('/',offset+1));
     return ctxPath;
 };
 
+CrossMan.Data.prototype.random = function(){
+    var object = this.data;
+    if (!object){
+        return Math.random();
+    }else if (typeof object == 'object'){ //Array, Object
+        var key = this.randomKey();
+        return object[key];
+    }else{ //Number
+        return Math.floor(Math.random() * object);
+    }
+};
+
+CrossMan.Data.prototype.randomKey = function(){
+    var object = this.data;
+    if (object instanceof Array){
+        var index = Math.floor(Math.random() * object.length);
+        return index;
+    }else if (typeof object == 'object'){
+        var keyList = Object.keys(object);
+        var index = Math.floor(Math.random() * keyList.length);
+        var key = keyList[index];
+        return key;
+    }
+};
+
+CrossMan.Data.prototype.randomColor = function(){
+    var color = '';
+    var data = getData([1,2,3,4,5,6,7,8,9,'A','B','C','D','E','F']);
+    for (var i=0; i<6; i++)
+        color += data.random();
+    return color;
+};
 
 
 
@@ -2269,6 +2302,9 @@ try{
         cloneEl:cloneEl,
         getData:getData,
         getXHR:getXHR,
+        postXHR:postXHR,
+        putXHR:putXHR,
+        deleteXHR:deleteXHR,
         SjEvent:SjEvent
     };
 }catch(e){}
