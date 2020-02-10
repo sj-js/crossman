@@ -127,6 +127,65 @@ function CrossMan(element){
     this.clazz = this.clas;
 }
 
+
+/**************************************************
+ *
+ * Binder for multiple element or parameter
+ *
+ **************************************************/
+CrossMan.multiCheck = function(funcName, args, instance){
+    return (CrossMan.multiElCheck.bind(instance)(funcName, args) || CrossMan.multiParamCheck.bind(instance)(funcName, args));
+};
+CrossMan.multiReverseCheck = function(funcName, args, instance){
+    return (CrossMan.multiElReverseCheck.bind(instance)(funcName, args) || CrossMan.multiParamReverseCheck.bind(instance)(funcName, args));
+};
+CrossMan.multiElCheck = function(functionName, args){
+    var maybeElementList = this.el;
+    if (maybeElementList instanceof Array || maybeElementList instanceof NodeList){
+        for (var i=0; i<maybeElementList.length; i++){
+            var CrossManForNode = getEl(maybeElementList[i]);
+            CrossManForNode[functionName].apply(CrossManForNode, args);
+        }
+        return true;
+    }
+    return false;
+};
+CrossMan.multiElReverseCheck = function(functionName, args){
+    var maybeElementList = this.el;
+    if (maybeElementList instanceof Array || maybeElementList instanceof NodeList){
+        for (var i=maybeElementList.length -1; i>-1; i--){
+            var CrossManForNode = getEl(maybeElementList[i]);
+            CrossManForNode[functionName].apply(CrossManForNode, args);
+        }
+        return true;
+    }
+    return false;
+};
+CrossMan.multiParamCheck = function(functionName, args){
+    var maybeParamList = args[0];
+    if (maybeParamList instanceof Array || maybeParamList instanceof NodeList){
+        for (var i=0; i<maybeParamList.length; i++){
+            args[0] = maybeParamList[i];
+            this[functionName].apply(this, args);
+        }
+        return true;
+    }
+    return false;
+};
+CrossMan.multiParamReverseCheck = function(functionName, args){
+    var maybeParamList = args[0];
+    if (maybeParamList instanceof Array || maybeParamList instanceof NodeList){
+        for (var i=maybeParamList.length -1; i>-1; i--){
+            args[0] = maybeParamList[i];
+            this[functionName].apply(this, args);
+        }
+        return true;
+    }
+    return false;
+};
+
+
+
 /*************************
  * element
  *************************/
@@ -146,22 +205,26 @@ CrossMan.prototype.clone = function(modeDeep){
  * attribute
  *************************/
 CrossMan.prototype.attr = function(key, val){
-    if (val){
-        this.el.setAttribute(key, val);
-        return this;
-    }else{
+    if (val == null)
         return this.el.getAttribute(key);
-    }
+    if (CrossMan.multiCheck('value', arguments, this))
+        return this;
+    this.el.setAttribute(key, val);
+    return this;
 };
 CrossMan.prototype.html = function(innerHTML){
     if (innerHTML == null)
         return this.el.innerHTML;
+    if (CrossMan.multiCheck('html', arguments, this))
+        return this;
     this.el.innerHTML = innerHTML;
     return this;
 };
 CrossMan.prototype.value = function(value){
     if (value == null)
         return this.el.value;
+    if (CrossMan.multiCheck('value', arguments, this))
+        return this;
     this.el.value = value;
     return this;
 };
@@ -178,14 +241,20 @@ CrossMan.prototype.parse = function(){
     }
 };
 CrossMan.prototype.check = function(flag){
+    if (CrossMan.multiCheck('check', arguments, this))
+        return this;
     this.el.checked = flag;
     return this;
 };
 CrossMan.prototype.clear = function(){
+    if (CrossMan.multiCheck('clear', arguments, this))
+        return this;
     this.el.innerHTML = '';
     return this;
 };
 CrossMan.prototype.style = function(cssText){
+    if (CrossMan.multiCheck('style', arguments, this))
+        return this;
     this.el.style.cssText = cssText;
     return this;
 };
@@ -226,15 +295,10 @@ CrossMan.prototype.existsParent = function(callback){
  * Class
  *************************/
 CrossMan.prototype.addClass = function(clazz){
-    if (clazz instanceof Array){
-        for (var i=0; i<clazz.length; i++){
-            var c = clazz[i];
-            this.addClass(c);
-        }
-    }else{
-        if (clazz)
-            this.clazz.add(clazz);
-    }
+    if (CrossMan.multiCheck('addClass', arguments, this))
+        return this;
+    if (clazz)
+        this.clazz.add(clazz);
     return this;
 };
 CrossMan.prototype.hasClass = function(clazz){
@@ -266,14 +330,9 @@ CrossMan.prototype.hasSomeClass = function(clazz){
     return result;
 };
 CrossMan.prototype.removeClass = function(clazz){
-    if (clazz instanceof Array){
-        for (var i=0; i<clazz.length; i++){
-            var c = clazz[i];
-            this.clazz.remove(c);
-        }
-    }else{
-        this.clazz.remove(clazz);
-    }
+    if (CrossMan.multiCheck('removeClass', arguments, this))
+        return this;
+    this.clazz.remove(clazz);
     return this;
 };
 
@@ -283,12 +342,8 @@ CrossMan.prototype.removeClass = function(clazz){
  * append
  *************************/
 CrossMan.prototype.add = function(appender){
-    if (appender instanceof Array || appender instanceof NodeList){
-        for (var i=0; i<appender.length; i++){
-            this.add(appender[i]);
-        }
+    if (CrossMan.multiCheck('add', arguments, this))
         return this;
-    }
     if (appender){
         if (appender instanceof CrossMan)
             this.add(appender.returnElement());
@@ -300,12 +355,8 @@ CrossMan.prototype.add = function(appender){
     return this;
 };
 CrossMan.prototype.addln = function(appender){
-    if (appender instanceof Array || appender instanceof NodeList){
-        for (var i=0; i<appender.length; i++){
-            this.addln(appender[i]);
-        }
+    if (CrossMan.multiCheck('addln', arguments, this))
         return this;
-    }
     if (appender){
         if (appender instanceof CrossMan)
             this.add(appender.returnElement());
@@ -318,10 +369,12 @@ CrossMan.prototype.addln = function(appender){
     return this;
 };
 CrossMan.prototype.addEl = function(appender){
+    if (CrossMan.multiCheck('addEl', arguments, this))
+        return this;
     if (typeof appender == 'string'){
         var p = document.createElement('p');
         p.innerHTML = appender;
-        for (var i=0, node; i<p.children.length; i++){
+        for (var i=0, node; i<p.children.length; i++){ //TODO: What situation did you have?... 검토필요
             node = p.children[i];
             this.add(node);
         }
@@ -331,12 +384,8 @@ CrossMan.prototype.addEl = function(appender){
     return this;
 };
 CrossMan.prototype.addAsFirst = function(appender){
-    if (appender instanceof Array || appender instanceof NodeList){
-        for (var i=appender.length -1; i>-1; i--){
-            this.addAsFirst(appender[i]);
-        }
+    if (CrossMan.multiReverseCheck('addAsFirst', arguments, this))
         return this;
-    }
     if (appender instanceof CrossMan)
         this.addAsFirst(appender.returnElement());
     else if (typeof appender == 'object')
@@ -345,29 +394,40 @@ CrossMan.prototype.addAsFirst = function(appender){
         this.el.insertBefore(document.createTextNode((appender)?appender:''), this.el.firstChild);
     return this;
 };
+
+/** @Deprecated **/
 CrossMan.prototype.addFrontOf = function(node, sibling){
     this.el.insertBefore(node, sibling);
     return this;
 };
+
 CrossMan.prototype.appendTo = function(parent){
+    if (CrossMan.multiCheck('appendTo', arguments, this))
+        return this;
     if (typeof parent == 'string')
         parent = document.getElementById(parent);
     parent.appendChild(this.el);
     return this;
 };
 CrossMan.prototype.appendToAsFirst = function(parent){
+    if (CrossMan.multiReverseCheck('appendToAsFirst', arguments, this))
+        return this;
     if (typeof parent == 'string')
         parent = document.getElementById(parent);
     parent.insertBefore(this.el, parent.firstChild);
     return this;
 };
 CrossMan.prototype.appendToFrontOf = function(target){
+    if (CrossMan.multiReverseCheck('appendToFrontOf', arguments, this))
+        return this;
     if (typeof target == 'string')
         target = document.getElementById(target);
     target.parentNode.insertBefore(this.el, target);
     return this;
 };
 CrossMan.prototype.appendToNextOf = function(target){
+    if (CrossMan.multiCheck('appendToNextOf', arguments, this))
+        return this;
     if (typeof target == 'string')
         target = document.getElementById(target);
     target.parentNode.insertBefore(this.el, target.nextSibling);
@@ -375,21 +435,21 @@ CrossMan.prototype.appendToNextOf = function(target){
 };
 
 CrossMan.prototype.remove = function(removeElObj){
-    if (removeElObj instanceof Array || removeElObj instanceof NodeList){
-        for (var i=0; i<removeElObj.length; i++){
-            this.remove(removeElObj[i]);
-        }
+    if (CrossMan.multiCheck('remove', arguments, this))
         return this;
-    }
     if (removeElObj && removeElObj.parentNode)
         removeElObj.parentNode.removeChild(removeElObj);
     return this;
 };
 CrossMan.prototype.del = CrossMan.prototype.remove;
 CrossMan.prototype.removeFromParent = function(){
+    if (CrossMan.multiCheck('removeFromParent', arguments, this))
+        return this;
     return this.remove(this.el);
 };
 CrossMan.prototype.deleteAll = function(){
+    if (CrossMan.multiCheck('deleteAll', arguments, this))
+        return this;
     if (this.el instanceof Array){
         this.el = [];
     }
@@ -405,13 +465,17 @@ CrossMan.prototype.hasEventListener = function(eventNm){
     return this.el.hasEventListener(eventNm);
 };
 CrossMan.prototype.removeEventListener = function(eventNm, fn){
+    if (CrossMan.multiCheck('removeEventListener', arguments, this))
+        return this;
     this.el.removeEventListener(eventNm, fn);
     return this;
 };
 CrossMan.prototype.addEventListener = function(eventNm, fn){
+    if (CrossMan.multiCheck('addEventListener', arguments, this))
+        return this;
     /* FireFox */
     if (navigator.userAgent.indexOf('Firefox') != -1){
-        this.el.addEventListener(eventNm, function(e){window.event=e;}, true);
+        this.el.addEventListener(eventNm, function(e){ window.event = e; }, true);
     }
     /* general */
     if (this.el.addEventListener){
@@ -419,7 +483,7 @@ CrossMan.prototype.addEventListener = function(eventNm, fn){
             fn(event);
             // fn(event, getEventTarget(event));
         });
-        /* IE8 */
+    /* IE8 */
     }else{
         if (!this.el.attachEvent){
             //No attachEvent
@@ -434,7 +498,6 @@ CrossMan.prototype.addEventListener = function(eventNm, fn){
         }catch(e){
             console.error(e);
         }
-
     }
     return this;
 };
@@ -443,6 +506,8 @@ CrossMan.prototype.addEventListener = function(eventNm, fn){
  * event - trigger
  *************************/
 CrossMan.prototype.trigger = function(eventNm){
+    if (CrossMan.multiCheck('trigger', arguments, this))
+        return this;
     if ("createEvent" in document) {
         var event = document.createEvent("HTMLEvents");
         event.initEvent(eventNm, false, true);
@@ -450,6 +515,7 @@ CrossMan.prototype.trigger = function(eventNm){
     }else{
         this.el.fireEvent("on" +eventNm);
     }
+    return this;
 };
 CrossMan.prototype.focus = function(){
     this.el.focus();
@@ -1855,7 +1921,7 @@ SjEvent.prototype.addSpecialEvent = function(element, eventName){
  *
  *************************/
 SjEvent.prototype.hasEventListener = function(element, eventName, eventFunc){
-    return this.hasEventListenerById(element, eventName, eventFunc);
+    return (arguments.length == 2) ? this.hasEventListenerByEventName.apply(this, arguments) : this.hasEventListenerById.apply(this, arguments);
 };
 SjEvent.prototype.hasEventListenerById = function(id, eventName, eventFunc){
     var hasEvent = false;
@@ -1951,8 +2017,8 @@ SjEvent.prototype.hasEventFunc = function(eventMap, eventFunc){
  * EVENT - REMOVE
  *
  *************************/
-SjEvent.prototype.removeEventListener = function(element, eventName, eventFunc){
-    return this.removeEventListenerById(element, eventName, eventFunc);
+SjEvent.prototype.removeEventListener = function(arg1, arg2, arg3){
+    return (arguments.length == 2) ? this.removeEventListenerByEventName.apply(this, arguments) : this.removeEventListenerById.apply(this, arguments);
 };
 SjEvent.prototype.removeEventListenerById = function(id, eventName, eventFunc){
     var result = false;
@@ -2079,7 +2145,7 @@ SjEvent.prototype.execEventListenerByEventName = function(eventName, event){
     var resultOnObject;
     //Exec Global Event
     resultOnGlobal = this.execEvent(this.globalEventMap, eventName, event);
-    //Exec Object Event
+    //Exec All Object Event
     for (var elementId in this.objectEventMap){
         var eventMapForObject = this.objectEventMap[elementId];
         resultOnObject = this.execEvent(eventMapForObject, eventName, event);
@@ -2289,7 +2355,6 @@ if (!String.prototype.trim) {
 
 
 
-
 /***************************************************************************
  * [Node.js] exports
  ***************************************************************************/
@@ -2308,20 +2373,3 @@ try{
         SjEvent:SjEvent
     };
 }catch(e){}
-
-// try{
-//     window.ready = ready;
-//     window.newEl = newEl;
-//     window.getEl = getEl;
-//     window.getData = getData;
-//     window.getXHR = getXHR;
-//     window.SjEvent = SjEvent;
-// }catch(e){
-//     global.ready = ready;
-//     global.newEl = newEl;
-//     global.getEl = getEl;
-//     global.getData = getData;
-//     global.getXHR = getXHR;
-//     global.SjEvent = SjEvent;
-// }
-
