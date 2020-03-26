@@ -36,7 +36,7 @@
         npm i @sj-js/crossman
         ```
         ```js
-        const { ready, getEl, newEl, cloneEl, searchEl, getData, SjEvent, getXHR, postXHR, putXHR, deleteXHR } = require('@sj-js/crossman');
+      const { ready, getEl, newEl, cloneEl, searchEl, getClass, getData, SjEvent, getXHR, postXHR, putXHR, deleteXHR } = require('@sj-js/crossman');
         ```
 
 1. Simple Example
