@@ -28,10 +28,10 @@ hasEventListenerByEventFunc | Event Function으로 Event 존재 확인
 #### ※ Event 제거 상세 
 종류 | 특징 
 -----|------
-addEventListener | Event 제거
-addEventListenerById | ID 또는 Element의 ID와 함께 Event 제거 
-addEventListenerByEventName | Event명만으로 Event 제거
-hasEventListenerByEventFunc | Event Function으로 Event 제거
+removeEventListener | Event 제거
+removeEventListenerById | ID 또는 Element의 ID와 함께 Event 제거 
+removeEventListenerByEventName | Event명만으로 Event 제거
+removeEventListenerByEventFunc | Event Function으로 Event 제거
 
 #### ※ Event 실행 상세 
 종류 | 특징 

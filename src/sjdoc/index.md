@@ -19,6 +19,7 @@
 - Element Control
 - Object Control
 - XHR Control
+- Class Cotntrol for ES5
 - Event Control
 ```
 

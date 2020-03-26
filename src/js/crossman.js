@@ -80,7 +80,14 @@ function getData(data){
     return new CrossMan.Data(data);
 }
 
-
+/***************************************************************************
+ *
+ * getClass
+ *
+ ***************************************************************************/
+function getClass(ClassFunction){
+    return new CrossMan.Clazz(ClassFunction);
+}
 
 
 
@@ -1675,8 +1682,24 @@ CrossMan.Data.removeSameObj = function(recentObjList, targetObj){
 };
 
 
-
-
+/***************************************************************************
+ *
+ * getClass
+ *
+ ***************************************************************************/
+CrossMan.Clazz = function(ClassFunction){
+    this.ClassFunction = ClassFunction;
+}
+CrossMan.Clazz.prototype.extend = function(SuperClassFunction){
+    /** Inheritance **/
+    var ClassFunction = this.ClassFunction;
+    ClassFunction.prototype = Object.create(SuperClassFunction.prototype);
+    ClassFunction.prototype.constructor = ClassFunction;
+    return this;
+}
+CrossMan.Clazz.prototype.returnFunction = function(){
+    return this.ClassFunction;
+}
 
 
 /***************************************************************************
@@ -2362,6 +2385,7 @@ try{
     module.exports = exports = {
         ready:ready,
         getEl:getEl,
+        getClass:getClass,
         newEl:newEl,
         searchEl:searchEl,
         cloneEl:cloneEl,
