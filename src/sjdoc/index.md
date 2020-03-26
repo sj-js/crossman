@@ -1,6 +1,7 @@
 # CrossMan
 ## 🤹‍♂️
 [![Build Status](https://travis-ci.org/sj-js/crossman.svg?branch=master)](https://travis-ci.org/sj-js/crossman)
+[![Coverage Status](https://coveralls.io/repos/github/sj-js/crossman/badge.svg)](https://coveralls.io/github/sj-js/crossman)
 [![All Download](https://img.shields.io/github/downloads/sj-js/crossman/total.svg)](https://github.com/sj-js/crossman/releases)
 [![Release](https://img.shields.io/github/release/sj-js/crossman.svg)](https://github.com/sj-js/crossman/releases)
 [![License](https://img.shields.io/github/license/sj-js/crossman.svg)](https://github.com/sj-js/crossman/releases)
@@ -9,6 +10,18 @@
 - `CrossBrowsing`과 `쉬운 인터페이스` 구현을 목표로 합니다.
 - ✨ Source: https://github.com/sj-js/crossman
 - ✨ Document: https://sj-js.github.io/sj-js/crossman
+
+
+## 0. Index
+*@* **order** *@*
+```
+- CrossMan
+- Element Control
+- Object Control
+- XHR Control
+- Event Control
+```
+
 
 ## Functions to start   
 1. `getEl(ID & ELEMENT)`: ID와 Element를 매개로 해당 Element를 편집합니다. 
@@ -22,18 +35,9 @@
 8. `SjEvent`: 자체 Event를 관리할 수 있는 솔루션을 제공합니다. 각종 
     - addEventListener, removeEventListener, hasEventListener, execEventListener ...
 
-
       
         
-## 0. Index
-*@* **order** *@*
-```
-- CrossMan
-- Element Control
-- Object Control
-- XHR Control
-- Event Control
-```
+
 
 
 

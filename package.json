@@ -2,12 +2,15 @@
   "name": "@sj-js/crossman",
   "version": "1.1.1",
   "description": "crossman is JavaScript Util for Cross-Browsing",
+  "homepage": "https://sj-js.github.io/sj-js/crossman",
   "main": "./index.js",
   "author": "souljungkim@gmail.com",
   "license": "MIT",
   "scripts": {
     "build": "gulp",
     "deploy": "npm publish",
+    "test": "nyc --reporter=html --reporter=text mocha --timeout 10000",
+    "coveralls": "nyc report --reporter=text-lcov | coveralls",
     "gitk": "gitk"
   },
   "repository": {
@@ -16,6 +19,7 @@
     "web": "https://github.com/sj-js/crossman"
   },
   "devDependencies": {
+    "coveralls": "^3.0.11",
     "gulp": "^4.0.2",
     "gulp-bower": "0.0.15",
     "gulp-clean": "^0.3.2",
@@ -36,6 +40,8 @@
     "jshint": "^2.9.3",
     "lodash": "4.17.13",
     "lodash.template": "4.5.0",
+    "mocha-jsdom": "^2.0.0",
+    "nyc": "^15.0.0",
     "open": "6.0.0"
   }
 }
