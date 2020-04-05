@@ -1,6 +1,6 @@
 /***************************************************************************
  *
- * Ready
+ * Start
  *
  ***************************************************************************/
 function ready(func){
@@ -9,7 +9,7 @@ function ready(func){
 
 /***************************************************************************
  *
- * getElement
+ * Element
  *
  ***************************************************************************/
 function getEl(id){
@@ -53,9 +53,43 @@ function cloneEl(id, modeDeep){
     return getEl(id).clone(modeDeep);
 }
 
+function forEl(arrayOrObjectOrNumber, closure){
+    return new CrossMan.Iterator(arrayOrObjectOrNumber, closure);
+}
+
+function ifEl(trueOrFalse, closure){
+    return new CrossMan.Condition(trueOrFalse, closure);
+}
+
+
 /***************************************************************************
  *
- * getXHR
+ * Data
+ *
+ ***************************************************************************/
+function getData(data){
+    return new CrossMan.Data(data);
+}
+
+function cloneData(id, modeDeep){
+    return getData(id).clone(modeDeep);
+}
+
+
+/***************************************************************************
+ *
+ * Class
+ *
+ ***************************************************************************/
+function getClass(ClassFunction){
+    return new CrossMan.Clazz(ClassFunction);
+}
+
+
+
+/***************************************************************************
+ *
+ * XHR
  *
  ***************************************************************************/
 function getXHR(url, bodyObject, headerObject){
@@ -70,25 +104,6 @@ function putXHR(url, bodyObject, headerObject){
 function deleteXHR(url, bodyObject, headerObject){
     return new CrossMan.XHR(url, bodyObject, headerObject).setMethod(CrossMan.XHR.DELETE);
 }
-
-/***************************************************************************
- *
- * getData
- *
- ***************************************************************************/
-function getData(data){
-    return new CrossMan.Data(data);
-}
-
-/***************************************************************************
- *
- * getClass
- *
- ***************************************************************************/
-function getClass(ClassFunction){
-    return new CrossMan.Clazz(ClassFunction);
-}
-
 
 
 /***************************************************************************
@@ -214,9 +229,17 @@ CrossMan.prototype.clone = function(modeDeep){
 CrossMan.prototype.attr = function(key, val){
     if (val == null)
         return this.el.getAttribute(key);
-    if (CrossMan.multiCheck('value', arguments, this))
+    if (CrossMan.multiCheck('attr', arguments, this))
         return this;
     this.el.setAttribute(key, val);
+    return this;
+};
+CrossMan.prototype.prop = function(key, val){
+    if (val == null)
+        return this.el[key];
+    if (CrossMan.multiCheck('prop', arguments, this))
+        return this;
+    this.el[key] = val;
     return this;
 };
 CrossMan.prototype.html = function(innerHTML){
@@ -231,6 +254,12 @@ CrossMan.prototype.value = function(value){
     if (value == null)
         return this.el.value;
     if (CrossMan.multiCheck('value', arguments, this))
+        return this;
+    this.el.value = value;
+    return this;
+};
+CrossMan.prototype.setValue = function(value){
+    if (CrossMan.multiCheck('setValue', arguments, this))
         return this;
     this.el.value = value;
     return this;
@@ -282,7 +311,11 @@ CrossMan.prototype.getStyle = function(property){
 };
 
 
-
+CrossMan.prototype.if = function(trueOrFalse, callback){
+    if (!!trueOrFalse)
+        (callback && callback(this));
+    return this;
+};
 CrossMan.prototype.exists = function(callback){
     var result = !!(this.el);
     if (result)
@@ -354,6 +387,8 @@ CrossMan.prototype.add = function(appender){
     if (appender){
         if (appender instanceof CrossMan)
             this.add(appender.returnElement());
+        else if (appender instanceof CrossMan.Iterator || appender instanceof CrossMan.Condition)
+            this.add(appender.returnElement());
         else if (typeof appender == 'object')
             this.el.appendChild(appender);
         else
@@ -411,7 +446,9 @@ CrossMan.prototype.addFrontOf = function(node, sibling){
 CrossMan.prototype.appendTo = function(parent){
     if (CrossMan.multiCheck('appendTo', arguments, this))
         return this;
-    if (typeof parent == 'string')
+    if (parent instanceof CrossMan)
+        parent = parent.returnElement();
+    else if (typeof parent == 'string')
         parent = document.getElementById(parent);
     parent.appendChild(this.el);
     return this;
@@ -767,14 +804,16 @@ CrossMan.prototype.ready = (function(){
 })();
 
 
-CrossMan.prototype.click = function(funcToClick){
-    this.el.onclick = funcToClick;
+
+CrossMan.prototype.click = function(){
+    this.el.click();
     return this;
 };
-CrossMan.prototype.change = function(funcToChange){
-    this.el.onchange = funcToChange;
+CrossMan.prototype.change = function(){
+    this.el.change();
     return this;
 };
+//TODO: 재검토 필요.
 CrossMan.prototype.resize = function(funcToAdd){
     var oldFunc = window.onresize;
     window.onresize = function(){
@@ -1031,7 +1070,8 @@ CrossMan.prototype.getMatchedDomAttributeWithParam = function(obj, param){
 CrossMan.prototype.getParentEl = function(attrNm){
     var searchSuperObj = this.el;
     while(searchSuperObj){
-        if (searchSuperObj.getAttribute(attrNm) != undefined) break;
+        if (searchSuperObj.getAttribute(attrNm) != undefined)
+            break;
         searchSuperObj = searchSuperObj.parentNode;
     }
     return searchSuperObj;
@@ -1039,9 +1079,45 @@ CrossMan.prototype.getParentEl = function(attrNm){
 CrossMan.prototype.findEl = function(attr, val){
     var subEls = this.el.children;
     for (var i=0; i<subEls.length; i++){
-        if (subEls[i].getAttribute(attr) == val) return subEls[i];
+        if (subEls[i].getAttribute(attr) == val)
+            return subEls[i];
     }
 };
+CrossMan.prototype.findChildEl = function(closureToFind, depth){
+    depth = (depth === null) ? 3 : depth;
+    if (closureToFind instanceof Function){
+        return CrossMan.findChildEl(this.el, closureToFind, depth);
+    }else if (typeof closureToFind == 'object'){
+        // return CrossMan.findChildEl(this.el, function(it){
+        //     return getEl(it).attr()
+        // }, depth);
+    }
+};
+CrossMan.findChildEl = function(element, closureToFind, depth){
+    var subEls = element.children;
+    if (!subEls || depth == 0)
+        return getEl();
+    for (var i=0, node, subNode; i<subEls.length; i++){
+        node = getEl(subEls[i]);
+        if (closureToFind(node))
+            return node;
+        subNode = CrossMan.findChildEl(subEls[i], closureToFind, depth -1);
+        if (subNode.el)
+            return subNode;
+    }
+    return getEl();
+};
+CrossMan.findChildElByAttributeObject = function(element, closureToFind, depth){
+    var subEls = element.children;
+    if (!subEls || depth == 0)
+        return getEl();
+    for (var i=0; i<subEls.length; i++){
+        if (closureToFind(subEls[i]))
+            return getEl(subEls[i]);
+        return CrossMan.findChildElByAttributeObject(subEls[i], closureToFind, depth -1);
+    }
+};
+
 CrossMan.prototype.findParentEl = function(attr, val){
     var foundEl;
     var parentEl = this.el;
@@ -1209,7 +1285,64 @@ CrossMan.prototype.getBoundingOffsetRect = function(){
 
 
 
+/***************************************************************************
+ *
+ * forEl
+ *
+ ***************************************************************************/
+CrossMan.Iterator = function(arrayOrObject, closure){
+    this.data = arrayOrObject;
+    this.closure = closure;
+    this.result = null;
+};
+CrossMan.Iterator.prototype.returnElement = function(){
+    return this.run();
+};
+CrossMan.Iterator.prototype.run = function(){
+    var closure = this.closure;
+    var data = this.data;
+    var resultElementList = [];
+    if (data instanceof Array){
+        for (var i = 0; i < data.length; i++){
+            resultElementList.push(closure(data[i], i));
+        }
+    }else if (typeof data == 'number'){
+        for (var i=0; i<data; i++){
+            resultElementList.push( closure(i) );
+        }
+    }else{
+        var i = -1;
+        for (var key in data){
+            resultElementList.push( closure(key, data[key], ++i) );
+        }
+    }
+    return resultElementList;
+};
 
+
+/***************************************************************************
+ *
+ * ifEl
+ *
+ ***************************************************************************/
+CrossMan.Condition = function(trueOrFalse, closureOrCrossManOrTextNode){
+    this.trueOrFalse = trueOrFalse;
+    this.closureOrCrossManOrTextNode = closureOrCrossManOrTextNode;
+    this.result = null;
+};
+CrossMan.Condition.prototype.returnElement = function(){
+    return this.run();
+};
+CrossMan.Condition.prototype.run = function(){
+    if (this.trueOrFalse){
+        if (this.closureOrCrossManOrTextNode instanceof Function){
+            return this.closureOrCrossManOrTextNode();
+        }else{
+            return this.closureOrCrossManOrTextNode;
+        }
+    }
+    return [];
+};
 
 
 
@@ -1221,9 +1354,6 @@ CrossMan.prototype.getBoundingOffsetRect = function(){
 CrossMan.Data = function(data){
     this.data = data;
 };
-
-
-
 /* 모바일여부 확인 */
 CrossMan.Data.prototype.isMobile = (function(){
     var mFilter = "win16|win32|win64|mac";
@@ -1320,6 +1450,34 @@ CrossMan.Data.prototype.checkFromURLHash = function(key, callback){
 
 
 
+CrossMan.Data.prototype.returnData = function(){
+    return this.data;
+};
+CrossMan.Data.prototype.returnCloneData = function(){
+    return CrossMan.Data.cloneObject(this.data);
+};
+CrossMan.Data.prototype.clone = function(){
+    var data = this.returnCloneData();
+    return getData(data);
+};
+
+
+
+CrossMan.Data.prototype.log = function(logMessage){
+    var logData = this.data;
+    try{
+        logData = JSON.stringify(this.data);
+    }catch(e){
+        try{
+            console.warn(e);
+        }catch(ee){
+            console.log(e);
+        }
+    }
+    console.log(logMessage + logData);
+    return this;
+};
+
 CrossMan.Data.prototype.contains = function(checkThing){
     if (typeof this.data == 'string'){
         if (checkThing instanceof Array){
@@ -1335,7 +1493,7 @@ CrossMan.Data.prototype.contains = function(checkThing){
 
 CrossMan.Data.prototype.nvl = function(valueIfNull){
     return (this.data == null || this.data === undefined) ? valueIfNull : this.data;
-}
+};
 
 CrossMan.Data.prototype.count = function(checkThing, allowOverlapping){
     var string = this.data += "";
@@ -1474,6 +1632,163 @@ CrossMan.Data.prototype.collectMap = function(closure){
     return newMap;
 };
 
+CrossMan.Data.prototype.merge = function(data){
+    var newMap = {};
+    var newItemEntry = null;
+    if (this.data instanceof Array){
+        for (var i=0, it; i<data.length; i++){
+            this.data.push( data[i] );
+        }
+    }else{
+        var key;
+        for (key in data){
+            this.data[key] = data[key];
+        }
+    }
+    return this;
+};
+
+CrossMan.Data.newMergeOptionAll = function(standardOption, mergeOption){
+    var mergedOption = standardOption;
+    if (!mergeOption){
+        mergedOption = CrossMan.Data.newMergeOptionAll({}, mergedOption);
+    }else{
+        //- Make List
+        if (!(mergeOption instanceof Array) && !mergeOption.length) //Array from other window is converted to Not Array... shit..
+            mergeOption = [mergeOption];
+        //- Merge All
+        for (var i=0; i<mergeOption.length; i++){
+            mergedOption = CrossMan.Data.newMergeOption(mergedOption, mergeOption[i]);
+        }
+    }
+    return mergedOption;
+};
+
+CrossMan.Data.newMergeOption = function(standardOption, mergeOption){
+    if (!standardOption)
+        standardOption = (mergeOption instanceof Array) ? [] : {};
+    // var newMergedOption = CrossMan.Data.assign({}, standardOption);
+    // var newMergedOption = JSON.parse(JSON.stringify(standardOption));
+    var newMergedOption = CrossMan.Data.cloneObject(standardOption);
+    return CrossMan.Data.mergeIntoOption(newMergedOption, mergeOption);
+};
+
+CrossMan.Data.mergeIntoOption = function(standardOption, mergeOption){
+    if (mergeOption){
+        if (!standardOption){
+            if (mergeOption instanceof Array)
+                standardOption = [];
+            else
+                standardOption = {};
+        }
+
+        for (var optionName in mergeOption){
+            var nextValue = mergeOption[optionName];
+            var mergedValue = null;
+            if (nextValue === null){
+                standardOption[optionName] = null;
+
+            }else if (nextValue === undefined){
+                standardOption[optionName] = undefined;
+
+            }else if (nextValue instanceof Element){
+                mergedValue = nextValue;
+                standardOption[optionName] = mergedValue;
+
+            }else if (nextValue instanceof Array){
+                if (!standardOption[optionName])
+                    standardOption[optionName] = [];
+                for (var i=0; i<nextValue.length; i++){
+                    if (nextValue[i] === null)
+                        mergedValue = null;
+                    else if (nextValue[i] === undefined)
+                        mergedValue = undefined;
+                    else if (nextValue[i] instanceof Element)
+                        mergedValue = nextValue[i];
+                    else if (nextValue[i] instanceof Array)
+                        mergedValue = CrossMan.Data.newMergeOption(standardOption[optionName][i], nextValue[i]);
+                    else if (typeof nextValue[i] == 'object')
+                        mergedValue = CrossMan.Data.newMergeOption(standardOption[optionName][i], nextValue[i]);
+                    else
+                        mergedValue = nextValue[i];
+                    standardOption[optionName][i] = mergedValue;
+                }
+
+            }else if (typeof nextValue == 'object'){
+                if (standardOption[optionName] == null)
+                    standardOption[optionName] = {};
+                for (var key in nextValue){
+                    if (nextValue[key] === null)
+                        mergedValue = null;
+                    else if (nextValue[key] === undefined)
+                        mergedValue = undefined;
+                    else if (nextValue[key] instanceof Element)
+                        mergedValue = nextValue[key];
+                    else if (nextValue[key] instanceof Array)
+                        mergedValue = CrossMan.Data.newMergeOption(standardOption[optionName][key], nextValue[key]);
+                    else if (typeof nextValue[key] == 'object')
+                        mergedValue = CrossMan.Data.newMergeOption(standardOption[optionName][key], nextValue[key]);
+                    else
+                        mergedValue = nextValue[key];
+                    standardOption[optionName][key] = mergedValue;
+                }
+
+            }else{
+                mergedValue = nextValue;
+                standardOption[optionName] = mergedValue;
+            }
+        }
+    }
+    return standardOption;
+};
+
+CrossMan.Data.cloneObject = function(obj){
+    var copy;
+    if (null == obj || "object" != typeof obj) // Handle the 3 simple types, and null or undefined
+        return obj;
+    if (obj instanceof Date){
+        copy = new Date();
+        copy.setTime(obj.getTime());
+        return copy;
+    }
+    if (obj instanceof Array){
+        copy = [];
+        for (var i=0, len=obj.length; i<len; i++){
+            copy[i] = CrossMan.Data.cloneObject(obj[i]);
+        }
+        return copy;
+    }
+    if (obj instanceof Element){ //TODO: This is Refference :)  right?
+        copy = obj;
+        return copy;
+    }
+    if (typeof obj == 'object' || obj instanceof Object){
+        copy = {};
+        for (var attr in obj){
+            if (obj.hasOwnProperty(attr))
+                copy[attr] = CrossMan.Data.cloneObject(obj[attr]);
+        }
+        return copy;
+    }
+    throw new Error("Unable to copy obj! Its type isn't supported.");
+};
+
+/*****
+ * Javascript Object.assign Alternative.
+ * @param target
+ * @returns {*}
+ *****/
+CrossMan.Data.assign = function(target){
+    for (var i=1; i<arguments.length; i++){
+        var source = arguments[i];
+        for (var key in source) {
+            if (source.hasOwnProperty(key)){
+                target[key] = source[key];
+            }
+        }
+    }
+    return target;
+};
 
 CrossMan.Data.prototype.parse = function(){
     if (this.data){
@@ -1568,6 +1883,26 @@ CrossMan.Data.prototype.randomColor = function(){
     for (var i=0; i<6; i++)
         color += data.random();
     return color;
+};
+
+/*****
+ * https://stackoverflow.com/a/21963136/12873116
+ *****/
+CrossMan.Data.lut = [];
+for (var i=0; i<256; i++) {
+    CrossMan.Data.lut[i] = (i<16?'0':'')+(i).toString(16);
+}
+
+CrossMan.Data.prototype.createUUID = function(){
+    // return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    //     var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8); return v.toString(16);
+    // });
+    var lut = CrossMan.Data.lut;
+    var d0 = Math.random() * 0xffffffff | 0;
+    var d1 = Math.random() * 0xffffffff | 0;
+    var d2 = Math.random() * 0xffffffff | 0;
+    var d3 = Math.random() * 0xffffffff | 0;
+    return lut[d0 & 0xff] + lut[d0 >> 8 & 0xff] + lut[d0 >> 16 & 0xff] + lut[d0 >> 24 & 0xff] + '-' + lut[d1 & 0xff] + lut[d1 >> 8 & 0xff] + '-' + lut[d1 >> 16 & 0x0f | 0x40] + lut[d1 >> 24 & 0xff] + '-' + lut[d2 & 0x3f | 0x80] + lut[d2 >> 8 & 0xff] + '-' + lut[d2 >> 16 & 0xff] + lut[d2 >> 24 & 0xff] + lut[d3 & 0xff] + lut[d3 >> 8 & 0xff] + lut[d3 >> 16 & 0xff] + lut[d3 >> 24 & 0xff];
 };
 
 
@@ -1881,6 +2216,11 @@ function SjEvent(){
  *
  *************************/
 SjEvent.prototype.addEventListener = function(element, eventName, eventFunc){
+    if (typeof element == 'string' && eventName instanceof Function && !eventFunc){
+        eventFunc = eventName;
+        eventName = element;
+        return this.addEventListenerByEventName(eventName, eventFunc);
+    }
     return this.addEventListenerById(element, eventName, eventFunc);
 };
 SjEvent.prototype.addEventListenerById = function(id, eventName, eventFunc){
@@ -2383,17 +2723,26 @@ if (!String.prototype.trim) {
  ***************************************************************************/
 try{
     module.exports = exports = {
+        /** Start **/
         ready:ready,
-        getEl:getEl,
+        /** Class **/
         getClass:getClass,
+        /** Element **/
+        getEl:getEl,
         newEl:newEl,
         searchEl:searchEl,
         cloneEl:cloneEl,
+        forEl:forEl,
+        ifEl:ifEl,
+        /** Data **/
         getData:getData,
+        cloneData:cloneData,
+        /** XHR **/
         getXHR:getXHR,
         postXHR:postXHR,
         putXHR:putXHR,
         deleteXHR:deleteXHR,
+        /** Event **/
         SjEvent:SjEvent
     };
 }catch(e){}
