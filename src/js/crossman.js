@@ -75,13 +75,19 @@ function cloneData(id, modeDeep){
     return getData(id).clone(modeDeep);
 }
 
+function getStorage(path){
+    return new CrossMan.Storage(path);
+}
+
+
+
 
 /***************************************************************************
  *
  * Class
  *
  ***************************************************************************/
-function getClass(ClassFunction){
+function getClazz(ClassFunction){
     return new CrossMan.Clazz(ClassFunction);
 }
 
@@ -311,9 +317,11 @@ CrossMan.prototype.getStyle = function(property){
 };
 
 
-CrossMan.prototype.if = function(trueOrFalse, callback){
+CrossMan.prototype.if = function(trueOrFalse, callback, callbackElse){
     if (!!trueOrFalse)
         (callback && callback(this));
+    else if (callbackElse)
+        (callbackElse && callbackElse(this));
     return this;
 };
 CrossMan.prototype.exists = function(callback){
@@ -1353,6 +1361,8 @@ CrossMan.Condition.prototype.run = function(){
  ***************************************************************************/
 CrossMan.Data = function(data){
     this.data = data;
+    // this.startIndex = startIndex !== null ? startIndex : 0;
+    // this.endIndex = endIndex !== null ? endIndex : null;
 };
 /* 모바일여부 확인 */
 CrossMan.Data.prototype.isMobile = (function(){
@@ -1460,7 +1470,15 @@ CrossMan.Data.prototype.clone = function(){
     var data = this.returnCloneData();
     return getData(data);
 };
-
+CrossMan.Data.prototype.getFirst = function(){
+    if (this.data instanceof Array){
+        return this.data[0];
+    }else{
+        for (var key in this.data){
+            return this.data[key];
+        }
+    }
+};
 
 
 CrossMan.Data.prototype.log = function(logMessage){
@@ -1478,6 +1496,20 @@ CrossMan.Data.prototype.log = function(logMessage){
     return this;
 };
 
+CrossMan.Data.prototype.range = function(startIndex, endIndex){
+    if (this.data instanceof Array){
+        var copyArray = [];
+        var startIndex = (startIndex !== null && startIndex !== undefined) ? startIndex : 0;
+        var endIndex = (endIndex !== null && endIndex !== undefined) ? endIndex : this.data.length -1;
+        for (var i=startIndex; i<endIndex +1; i++){
+            copyArray.push( this.data[i] );
+        }
+        this.data = copyArray;
+    }
+    return this;
+};
+
+
 CrossMan.Data.prototype.contains = function(checkThing){
     if (typeof this.data == 'string'){
         if (checkThing instanceof Array){
@@ -1488,6 +1520,15 @@ CrossMan.Data.prototype.contains = function(checkThing){
             return true;
         }
         return this.data.indexOf(checkThing) != -1;
+    }
+};
+CrossMan.Data.prototype.isEmpty = function(){
+    if (!this.data) //TODO: null도 Empty
+        return true;
+    if (this.data instanceof Array){
+        return this.data.length == 0;
+    }else if (typeof this.data == 'object'){
+        return Object.keys(this.data).length == 0;
     }
 };
 
@@ -1930,9 +1971,140 @@ CrossMan.Data.prototype.save = function(value){
     return this;
 };
 
-CrossMan.Data.prototype.getWithLocalStorage = function(saveKey){
-    var val = this.getStringWithLocalStorage(saveKey);
-    this.data = val;
+// CrossMan.Data.prototype.getWithLocalStorage = function(saveKey){
+//     var val = this.getStringWithLocalStorage(saveKey);
+//     this.data = val;
+//     if (val && (val.indexOf('[') == 0 || val.indexOf('{') == 0))
+//         return JSON.parse(val);
+//     if (val == 'true')
+//         return true;
+//     if (val == 'false')
+//         return false;
+//     return val;
+// };
+// CrossMan.Data.prototype.getStringWithLocalStorage = function(saveKey){
+//     return localStorage.getItem(saveKey);
+// };
+// CrossMan.Data.prototype.getBooleanWithLocalStorage = function(saveKey){
+//     var val = this.getStringWithLocalStorage(saveKey);
+//     // - TRUE = true or 'true' // - FALSE = null or false or Any Characters,
+//     return (val && (val == true || val == 'true'));
+// };
+// CrossMan.Data.prototype.getObjWithLocalStorage = function(saveKey){
+//     var val = this.getStringWithLocalStorage(saveKey);
+//     return JSON.parse(val);
+// };
+// CrossMan.Data.prototype.parseWithLocalStorage = CrossMan.Data.prototype.getObjWithLocalStorage;
+// CrossMan.Data.prototype.nvlWithLocalStorage = function(key, nvlData){
+//     var data = this.getWithLocalStorage(key);
+//     return data == null ? nvlData : data;
+// };
+// CrossMan.Data.prototype.setWithLocalStorage = function(saveKey, val){
+//     if (typeof val == 'string' || typeof val == 'number'){
+//         localStorage.setItem(saveKey, val);
+//     }else{
+//         localStorage.setItem(saveKey, JSON.stringify(val));
+//     }
+// };
+// CrossMan.Data.prototype.addWithLocalStorage = function(saveKey, val){
+//     //Check before data
+//     var listItem = this.getWithLocalStorage(saveKey);
+//     //Push data
+//     if (listItem && listItem instanceof Array && listItem.length > 0){
+//         listItem.push(val);
+//     }else{
+//         listItem = [val];
+//     }
+//     //Check Limit Length
+//     if (limitLength && listItem.length > limitLength){
+//         var targetLengthToDelete = (listItem.length - limitLength);
+//         listItem.splice(0, targetLengthToDelete);
+//     }
+//     //Save to LocalStorage
+//     this.setWithLocalStorage(saveKey, listItem);
+//     return listItem;
+// }
+// CrossMan.Data.prototype.removeWithLocalStorage = function(saveKey){
+//     localStorage.removeItem(saveKey);
+// };
+// CrossMan.Data.prototype.addRecentData = function(saveKey, obj, cnt, isAccum){
+//     var recentObjList = this.getObjWithLocalStorage(saveKey);
+//     if (!recentObjList || !recentObjList.splice) recentObjList = [];
+//     if (!isAccum) CrossMan.Data.removeSameObj(recentObjList, obj);
+//     recentObjList.splice(0, 0, obj);
+//     recentObjList.splice(cnt, 1);
+//     this.set(saveKey, recentObjList);
+// };
+// CrossMan.Data.prototype.getRecentData = function(saveKey, cnt){
+//     var resultList = [];
+//     var recentObjList = this.getObjWithLocalStorage(saveKey);
+//     if (recentObjList){
+//         resultList = recentObjList.splice(0, cnt);
+//         resultList = (cnt) ? resultList : recentObjList;
+//     }
+//     return resultList;
+// };
+// CrossMan.Data.removeSameObj = function(recentObjList, targetObj){
+//     var length = recentObjList.length;
+//     for (var i=0; i<length; i++){
+//         var j = length - (i + 1);
+//         var obj = recentObjList[j];
+//         var flag = true;
+//         for (var attr in obj){
+//             if (obj[attr] != targetObj[attr]) flag = false;
+//         }
+//         if (flag) recentObjList.splice(j, 1);
+//     }
+// };
+
+
+
+/***************************************************************************
+ *
+ * getStorage
+ *
+ ***************************************************************************/
+CrossMan.Storage = function(saveKey){
+    this.saveKey = saveKey;
+};
+
+CrossMan.Storage.prototype.save = function(data){
+    CrossMan.Storage.setWithLocalStorage(this.saveKey, data);
+    return this;
+};
+CrossMan.Storage.prototype.load = function(callbackToGetData){
+    var value = CrossMan.Storage.getWithLocalStorage(this.saveKey);
+    if (callbackToGetData){
+        var returnValue = callbackToGetData(value);
+        if (returnValue != null)
+            return getData(returnValue);
+    }else{
+        return value;
+    }
+    return this;
+};
+CrossMan.Storage.prototype.addRecentData = function(saveKey, obj, cnt, isAccum){
+    var recentObjList = CrossMan.Storage.getObjWithLocalStorage(saveKey);
+    if (!recentObjList || !recentObjList.splice) recentObjList = [];
+    if (!isAccum)
+        CrossMan.Storage.removeSameObj(recentObjList, obj);
+    recentObjList.splice(0, 0, obj);
+    recentObjList.splice(cnt, 1);
+    CrossMan.Storage.setWithLocalStorage(saveKey, recentObjList);
+};
+CrossMan.Storage.prototype.getRecentData = function(saveKey, cnt){
+    var resultList = [];
+    var recentObjList = CrossMan.Storage.getObjWithLocalStorage(saveKey);
+    if (recentObjList){
+        resultList = recentObjList.splice(0, cnt);
+        resultList = (cnt) ? resultList : recentObjList;
+    }
+    return resultList;
+};
+
+
+CrossMan.Storage.getWithLocalStorage = function(saveKey){
+    var val = CrossMan.Storage.getStringWithLocalStorage(saveKey);
     if (val && (val.indexOf('[') == 0 || val.indexOf('{') == 0))
         return JSON.parse(val);
     if (val == 'true')
@@ -1941,33 +2113,33 @@ CrossMan.Data.prototype.getWithLocalStorage = function(saveKey){
         return false;
     return val;
 };
-CrossMan.Data.prototype.getStringWithLocalStorage = function(saveKey){
+CrossMan.Storage.getStringWithLocalStorage = function(saveKey){
     return localStorage.getItem(saveKey);
 };
-CrossMan.Data.prototype.getBooleanWithLocalStorage = function(saveKey){
-    var val = this.getStringWithLocalStorage(saveKey);
+CrossMan.Storage.getBooleanWithLocalStorage = function(saveKey){
+    var val = CrossMan.Storage.getStringWithLocalStorage(saveKey);
     // - TRUE = true or 'true' // - FALSE = null or false or Any Characters,
     return (val && (val == true || val == 'true'));
 };
-CrossMan.Data.prototype.getObjWithLocalStorage = function(saveKey){
-    var val = this.getStringWithLocalStorage(saveKey);
+CrossMan.Storage.getObjWithLocalStorage = function(saveKey){
+    var val = CrossMan.Storage.getStringWithLocalStorage(saveKey);
     return JSON.parse(val);
 };
-CrossMan.Data.prototype.parseWithLocalStorage = CrossMan.Data.prototype.getObjWithLocalStorage;
-CrossMan.Data.prototype.nvlWithLocalStorage = function(key, nvlData){
-    var data = this.getWithLocalStorage(key);
+CrossMan.Storage.parseWithLocalStorage = CrossMan.Storage.getObjWithLocalStorage;
+CrossMan.Storage.nvlWithLocalStorage = function(key, nvlData){
+    var data = CrossMan.Storage.getWithLocalStorage(key);
     return data == null ? nvlData : data;
 };
-CrossMan.Data.prototype.setWithLocalStorage = function(saveKey, val){
+CrossMan.Storage.setWithLocalStorage = function(saveKey, val){
     if (typeof val == 'string' || typeof val == 'number'){
         localStorage.setItem(saveKey, val);
     }else{
         localStorage.setItem(saveKey, JSON.stringify(val));
     }
 };
-CrossMan.Data.prototype.addWithLocalStorage = function(saveKey, val){
+CrossMan.Storage.addWithLocalStorage = function(saveKey, val){
     //Check before data
-    var listItem = this.getWithLocalStorage(saveKey);
+    var listItem = CrossMan.Storage.getWithLocalStorage(saveKey);
     //Push data
     if (listItem && listItem instanceof Array && listItem.length > 0){
         listItem.push(val);
@@ -1980,30 +2152,13 @@ CrossMan.Data.prototype.addWithLocalStorage = function(saveKey, val){
         listItem.splice(0, targetLengthToDelete);
     }
     //Save to LocalStorage
-    this.setWithLocalStorage(saveKey, listItem);
+    CrossMan.Storage.setWithLocalStorage(saveKey, listItem);
     return listItem;
-}
-CrossMan.Data.prototype.removeWithLocalStorage = function(saveKey){
+};
+CrossMan.Storage.removeWithLocalStorage = function(saveKey){
     localStorage.removeItem(saveKey);
 };
-CrossMan.Data.prototype.addRecentData = function(saveKey, obj, cnt, isAccum){
-    var recentObjList = this.getObjWithLocalStorage(saveKey);
-    if (!recentObjList || !recentObjList.splice) recentObjList = [];
-    if (!isAccum) CrossMan.Data.removeSameObj(recentObjList, obj);
-    recentObjList.splice(0, 0, obj);
-    recentObjList.splice(cnt, 1);
-    this.set(saveKey, recentObjList);
-};
-CrossMan.Data.prototype.getRecentData = function(saveKey, cnt){
-    var resultList = [];
-    var recentObjList = this.getObjWithLocalStorage(saveKey);
-    if (recentObjList){
-        resultList = recentObjList.splice(0, cnt);
-        resultList = (cnt) ? resultList : recentObjList;
-    }
-    return resultList;
-};
-CrossMan.Data.removeSameObj = function(recentObjList, targetObj){
+CrossMan.Storage.removeSameObj = function(recentObjList, targetObj){
     var length = recentObjList.length;
     for (var i=0; i<length; i++){
         var j = length - (i + 1);
@@ -2017,6 +2172,9 @@ CrossMan.Data.removeSameObj = function(recentObjList, targetObj){
 };
 
 
+
+
+
 /***************************************************************************
  *
  * getClass
@@ -2024,17 +2182,20 @@ CrossMan.Data.removeSameObj = function(recentObjList, targetObj){
  ***************************************************************************/
 CrossMan.Clazz = function(ClassFunction){
     this.ClassFunction = ClassFunction;
-}
+};
 CrossMan.Clazz.prototype.extend = function(SuperClassFunction){
     /** Inheritance **/
     var ClassFunction = this.ClassFunction;
     ClassFunction.prototype = Object.create(SuperClassFunction.prototype);
     ClassFunction.prototype.constructor = ClassFunction;
     return this;
-}
+};
 CrossMan.Clazz.prototype.returnFunction = function(){
     return this.ClassFunction;
-}
+};
+
+
+
 
 
 /***************************************************************************
@@ -2205,6 +2366,7 @@ CrossMan.XHR.prototype.request = function(callbackWhenSuccess, callbackWhenError
  *
  ***************************************************************************/
 function SjEvent(){
+    this._id = getData().createUUID();
     this.specialEventListenerFunc;
     this.globalEventMap = {};
     this.objectEventMap = {};
@@ -2531,6 +2693,139 @@ SjEvent.prototype.execEvent = function(eventMap, eventNm, event){
 };
 
 
+
+
+
+/***************************************************************************
+ *
+ *  AnimationMan
+ *
+ ***************************************************************************/
+var SjAnimation = getClazz(function(){
+    this.status;
+    this.statusAnimationRunning = false;
+    this.animationRate = -1;
+    this.funcWhenCompleteFadeIn = null;
+    this.funcWhenCompleteFadeOut = null;
+
+    this.animationTime = 1000;
+    this.delta = 16;
+})
+.extend(SjEvent)
+.returnFunction();
+SjAnimation.STATUS_NONE = 0;
+SjAnimation.STATUS_FADE_IN = 1;
+SjAnimation.STATUS_FADE_OUT = 2;
+SjAnimation.EVENT_FADEINSTART = 'fadeinstart';
+SjAnimation.EVENT_FADEOUTSTART = 'fadeoutstart';
+SjAnimation.EVENT_FADEIN = 'fadein';
+SjAnimation.EVENT_FADEOUT = 'fadeout';
+SjAnimation.EVENT_FADEINOUT = 'fadeinout';
+SjAnimation.EVENT_FADEINCOMPLETE = 'fadeincomplete';
+SjAnimation.EVENT_FADEOUTCOMPLETE = 'fadeoutcomplete';
+
+SjAnimation.prototype.setTime = function(animationTime){
+    this.animationTime = animationTime;
+    return this;
+};
+SjAnimation.prototype.setDelta = function(delta){
+    this.delta = delta;
+    return this;
+};
+
+SjAnimation.prototype.fadeIn = function(callback){
+    this.status = SjAnimation.STATUS_FADE_IN;
+    this.funcWhenCompleteFadeIn = callback;
+    if (this.animationRate == -1){
+        this.animationRate = 0;
+    }
+    if (this.animationRate == 0){
+        this.execEventListenerByEventName(SjAnimation.EVENT_FADEINSTART, this.animationRate);
+    }
+    if (this.checkStatusComplete()){
+        (this.funcWhenCompleteFadeIn && this.funcWhenCompleteFadeIn());
+        this.funcWhenCompleteFadeIn = null;
+        return;
+    }
+    if (!this.statusAnimationRunning)
+        this.run();
+};
+SjAnimation.prototype.fadeOut = function(callback){
+    this.status = SjAnimation.STATUS_FADE_OUT;
+    this.funcWhenCompleteFadeOut = callback;
+    if (this.animationRate == -1){
+        this.animationRate = 1;
+    }
+    if (this.animationRate == 1){
+        this.execEventListenerByEventName(SjAnimation.EVENT_FADEOUTSTART, this.animationRate);
+    }
+    if (this.checkStatusComplete()){
+        (this.funcWhenCompleteFadeOut && this.funcWhenCompleteFadeOut());
+        this.funcWhenCompleteFadeOut = null;
+        return;
+    }
+    if (!this.statusAnimationRunning)
+        this.run();
+};
+SjAnimation.prototype.fadeOutWhenNotComplete = function(callback){
+    if (!this.checkStatusFadeOutComplete()){
+        this.fadeOut(callback);
+        return true;
+    }
+    return false;
+};
+SjAnimation.prototype.run = function(){
+    var that = this;
+    this.statusAnimationRunning = true;
+    var d = (this.delta / this.animationTime);
+    if (this.status == SjAnimation.STATUS_FADE_IN){
+        this.animationRate = Math.min(1, this.animationRate +d);
+        this.execEventListenerByEventName(SjAnimation.EVENT_FADEIN, this.animationRate);
+    }else if (this.status == SjAnimation.STATUS_FADE_OUT){
+        this.animationRate = Math.max(0, this.animationRate -d);
+        this.execEventListenerByEventName(SjAnimation.EVENT_FADEOUT, this.animationRate);
+    }
+    this.execEventListenerByEventName(SjAnimation.EVENT_FADEINOUT, this.animationRate);
+    //Check Finish
+    if (that.checkStatusComplete()){
+        this.statusAnimationRunning = false;
+        if (this.status == SjAnimation.STATUS_FADE_IN){
+            (this.funcWhenCompleteFadeIn && this.funcWhenCompleteFadeIn());
+            this.funcWhenCompleteFadeIn = null;
+            this.execEventListenerByEventName(SjAnimation.EVENT_FADEINCOMPLETE, this.animationRate);
+        }else if (this.status == SjAnimation.STATUS_FADE_OUT){
+            (this.funcWhenCompleteFadeOut && this.funcWhenCompleteFadeOut());
+            this.funcWhenCompleteFadeOut = null;
+            this.execEventListenerByEventName(SjAnimation.EVENT_FADEOUTCOMPLETE, this.animationRate);
+        }
+    }else{
+        //Animation Frame Engine
+        setTimeout(function(){
+            that.run();
+        }, this.delta);
+    }
+};
+SjAnimation.prototype.checkStatusComplete = function(){
+    if (this.status == SjAnimation.STATUS_FADE_IN){
+        if (this.animationRate == 1)
+            return true;
+    }else if (this.status == SjAnimation.STATUS_FADE_OUT){
+        if (this.animationRate == 0)
+            return true;
+    }
+    return false;
+};
+SjAnimation.prototype.checkStatusFadeOutComplete = function(){
+    return (this.status == SjAnimation.STATUS_FADE_OUT) && this.checkStatusComplete();
+};
+
+
+
+
+
+
+
+
 /////////////////////////
 // requestAnimationFrame
 /////////////////////////
@@ -2726,7 +3021,7 @@ try{
         /** Start **/
         ready:ready,
         /** Class **/
-        getClass:getClass,
+        getClazz:getClazz,
         /** Element **/
         getEl:getEl,
         newEl:newEl,
@@ -2737,12 +3032,14 @@ try{
         /** Data **/
         getData:getData,
         cloneData:cloneData,
+        getStorage:getStorage,
         /** XHR **/
         getXHR:getXHR,
         postXHR:postXHR,
         putXHR:putXHR,
         deleteXHR:deleteXHR,
         /** Event **/
-        SjEvent:SjEvent
+        SjEvent:SjEvent,
+        SjAnimation:SjAnimation,
     };
 }catch(e){}
