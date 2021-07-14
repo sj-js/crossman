@@ -1,6 +1,6 @@
 {
   "name": "@sj-js/crossman",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "crossman is JavaScript Util for Cross-Browsing",
   "homepage": "https://sj-js.github.io/sj-js/crossman",
   "main": "./index.js",
