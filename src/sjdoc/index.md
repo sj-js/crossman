@@ -28,15 +28,12 @@
 1. `getEl(ID & ELEMENT)`: ID와 Element를 매개로 해당 Element를 편집합니다. 
 2. `searchEl(SELECTOR)`: querySelector를 사용하여 해당 Element를 편집합니다.
 3. `newEl(TAGNAME)`: 새로운 Element 생성을 시작으로 해당 Element를 편집합니다.
-4. `forEl(data, Callack)`: add 수행시 특정 자료구조의 양만큼 함수코드를 반복시켜 반환하는 Element를 추가합니다. 
-5. `ifEl(condition, Callack OR Node)`: add 수행시 Boolean값에 맞춰 함수코드에서 반환하는 Element를 추가 또는 무시합니다.
-6. `cloneEl(ID & ELEMENT)`: 기존 Element를 'clone'하며 편집을 시작합니다.
-7. `getData(OBJECT)`: 다양한 자료형(Number, Object, Array..) 데이터로 편집합니다.
-8. `cloneData(OBJECT)`: 기존 데이터를 'clone'하며 편집을 시작합니다.
-9. `getXHR(OBJECT)`: HTTP프로토콜로 Request를 보냅니다.
+4. `cloneEl(ID & ELEMENT)`: 기존 Element를 'clone'을 시작으로 해당 Element를 편집합니다.
+5. `getData(OBJECT)`: 다양한 자료형(Number, Object, Array..) 데이터로 편집합니다.
+6. `getXHR(OBJECT)`: HTTP프로토콜로 Request를 보냅니다.
     - postXHR, putXHR, deleteXHR  
-10. `ready(FUNCTION)`: Document 문서를 불러온 후 작동합니다. 기존 JQuery의 ready와 유사합니다.  
-11. `SjEvent`: 자체 Event를 관리할 수 있는 솔루션을 제공합니다. 각종 
+7. `ready(FUNCTION)`: Document 문서를 불러온 후 작동합니다. 기존 JQuery의 ready와 유사합니다.  
+8. `SjEvent`: 자체 Event를 관리할 수 있는 솔루션을 제공합니다. 각종 
     - addEventListener, removeEventListener, hasEventListener, execEventListener ...
 
       
@@ -63,7 +60,7 @@
     npm i @sj-js/crossman
     ```
     ```js
-    const { ready, getEl, newEl, cloneEl, searchEl, forEl, ifEl, getClass, getData, cloneData, SjEvent, getXHR, postXHR, putXHR, deleteXHR } = require('@sj-js/crossman');
+    const { ready, getEl, newEl, cloneEl, searchEl, getClass, getData, SjEvent, getXHR, postXHR, putXHR, deleteXHR } = require('@sj-js/crossman');
     ```
 
 
