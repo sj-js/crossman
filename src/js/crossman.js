@@ -249,7 +249,7 @@ CrossMan.prototype.prop = function(key, val){
     return this;
 };
 CrossMan.prototype.html = function(innerHTML){
-    if (innerHTML == null)
+    if (innerHTML === null || innerHTML === undefined)
         return this.el.innerHTML;
     if (CrossMan.multiCheck('html', arguments, this))
         return this;
@@ -849,6 +849,11 @@ CrossMan.prototype.forChildren = function(functionForLoop){
 CrossMan.prototype.each = function(closure){
     getData(this.el).each(closure);
     return this;
+};
+
+CrossMan.prototype.collect = function(closure){
+    var newList = getData(this.el).collect(closure);
+    return newList;
 };
 
 CrossMan.prototype.any = function(closure){
@@ -1458,6 +1463,11 @@ CrossMan.Data.prototype.checkFromURLHash = function(key, callback){
     return false;
 };
 
+CrossMan.Data.prototype.replaceFirst = function(regexp, replacer){
+    this.data = this.data.replace(new RegExp(regexp), replacer);
+    return this;
+};
+
 
 
 CrossMan.Data.prototype.returnData = function(){
@@ -1556,6 +1566,10 @@ CrossMan.Data.prototype.count = function(checkThing, allowOverlapping){
     return n;
 };
 
+CrossMan.Data.prototype.join = function(joiner){
+    return this.data.join(joiner)
+};
+
 CrossMan.Data.prototype.each = function(closure){
     if (this.data instanceof Array || this.data instanceof NodeList){
         for (var i = 0; i < this.data.length; i++){
@@ -1572,7 +1586,7 @@ CrossMan.Data.prototype.each = function(closure){
 };
 
 CrossMan.Data.prototype.find = function(closure){
-    if (this.data instanceof Array){
+    if (this.data instanceof Array || this.data instanceof NodeList){
         for (var i=0; i<this.data.length; i++){
             if (closure(this.data[i], i))
                 return this.data[i];
@@ -1585,9 +1599,37 @@ CrossMan.Data.prototype.find = function(closure){
     }
     return null;
 };
+CrossMan.Data.prototype.findIndex = function(closure){
+    if (this.data instanceof Array){
+        for (var i=0; i<this.data.length; i++){
+            if (closure(this.data[i], i))
+                return i;
+        }
+    }else{
+        for (var key in this.data){
+            if (closure(key, this.data[key]))
+                return key;
+        }
+    }
+    return -1;
+};
+CrossMan.Data.prototype.remove = function(closure){
+    if (this.data instanceof Array){
+        for (var i=0; i<this.data.length; i++){
+            if (closure(this.data[i], i))
+                this.data.splice(i, 1);
+        }
+    }else{
+        for (var key in this.data){
+            if (closure(key, this.data[key]))
+                delete this.data[key];
+        }
+    }
+    return null;
+};
 
 CrossMan.Data.prototype.findAll = function(closure){
-    if (this.data instanceof Array){
+    if (this.data instanceof Array || this.data instanceof NodeList){
         var foundList = [];
         for (var i=0; i<this.data.length; i++){
             if (closure(this.data[i], i))
@@ -1606,7 +1648,7 @@ CrossMan.Data.prototype.findAll = function(closure){
 };
 
 CrossMan.Data.prototype.every = function(closure){
-    if (this.data instanceof Array){
+    if (this.data instanceof Array || this.data instanceof NodeList){
         for (var i=0; i<this.data.length; i++){
             if (!closure(this.data[i], i))
                 return false;
@@ -1636,9 +1678,85 @@ CrossMan.Data.prototype.any = function(closure){
 };
 CrossMan.Data.prototype.some = CrossMan.Data.prototype.any;
 
+CrossMan.Data.prototype.top = function(numberOfBest, closure){
+    if (numberOfBest < 1)
+        return [];
+
+    let tops = [];
+    let checker = [];
+    let node = null;
+    let returnedScore = -1;
+    if (this.data instanceof Array || this.data instanceof NodeList){
+        for (var i=0; i<this.data.length; i++){
+            node = this.data[i];
+            returnedScore = closure(node, i);
+            checker.push({score:returnedScore, node:node});
+        }
+    }else{
+        for (var key in this.data){
+            node = this.data[key];
+            returnedScore = closure(key, this.data[key]);
+            checker.push({score:returnedScore, node:node});
+        }
+    }
+
+    //Sort
+    checker = checker.sort(function(a, b){
+        return b.score - a.score;
+    });
+
+    //Splice
+    var collectorLength = Math.min(checker.length, numberOfBest);
+    for (var i=0; i<collectorLength; i++){
+        tops.push( checker[i].node );
+    }
+
+    console.error("tops...", collectorLength, tops, checker);
+
+    return tops;
+};
+
+CrossMan.Data.prototype.topEntries = function(numberOfBest, closure){
+    if (numberOfBest < 1)
+        return [];
+
+    let tops = [];
+    let checker = [];
+    let node = null;
+    let returnedScore = -1;
+    // if (this.data instanceof Array || this.data instanceof NodeList){
+    //     for (var i=0; i<this.data.length; i++){
+    //         node = this.data[i];
+    //         returnedScore = closure(node, i);
+    //         checker.push({score:returnedScore, node:node});
+    //     }
+    // }else{
+        for (var key in this.data){
+            node = this.data[key];
+            returnedScore = closure(key, this.data[key]);
+            checker.push({score:returnedScore, node:{key:key, value:node}});
+        }
+    // }
+
+    //Sort
+    checker = checker.sort(function(a, b){
+        return b.score - a.score;
+    });
+
+    //Splice
+    var collectorLength = Math.min(checker.length, numberOfBest);
+    for (var i=0; i<collectorLength; i++){
+        tops.push( checker[i].node );
+    }
+
+    console.error("tops...", collectorLength, tops, checker);
+
+    return tops;
+};
+
 CrossMan.Data.prototype.collect = function(closure){
     var newList = [];
-    if (this.data instanceof Array){
+    if (this.data instanceof Array || this.data instanceof NodeList){
         for (var i=0, newItem; i<this.data.length; i++){
             newItem = closure(this.data[i], i);
             newList.push(newItem);
@@ -1671,6 +1789,53 @@ CrossMan.Data.prototype.collectMap = function(closure){
         }
     }
     return newMap;
+};
+
+CrossMan.Data.prototype.sum = function(closure){
+    var resultNumber = 0;
+    if (this.data instanceof Array){
+        for (var i=0, number; i<this.data.length; i++){
+            resultNumber += closure(this.data[i], i);
+        }
+    }else{
+        var index = -1;
+        for (var key in this.data){
+            resultNumber += closure(key, this.data[key], ++index);
+        }
+    }
+    return resultNumber;
+};
+
+CrossMan.Data.prototype.sort = function(closure){
+    var data = this.data;
+    if (data instanceof Array){
+        data.sort(closure);
+    }else{
+        // object를 키 이름으로 정렬하여 반환 //TODO: 하다보니까 직접 정렬을 구현해야함. 나중에하자.
+        // var keys = [], tempData = {}, key, tempArray = [];
+        // //- extract keys
+        // for (key in data) {
+        //     if (o.hasOwnProperty(key)){
+        //         keys.push(key);
+        //         tempArray.push(data[key]);
+        //     }
+        // }
+        // //- sort
+        // tempArray.sort(closure);
+        // //- move data to temp
+        // for (var i=0; i<keys.length; i++) {
+        //     key = keys[i];
+        //     tempData[key] = o[key];
+        //     delete data[key];
+        // }
+        // //- reconsist
+        // for (var i=0; i<keys.length; i++) {
+        //     key = keys[i];
+        //     data[key] = tempData[key];
+        // }
+        // return tempData;
+    }
+    return this;
 };
 
 CrossMan.Data.prototype.merge = function(data){
@@ -1804,12 +1969,20 @@ CrossMan.Data.cloneObject = function(obj){
         return copy;
     }
     if (typeof obj == 'object' || obj instanceof Object){
-        copy = {};
+        var newProto, newInstance;
+        try{
+            newProto = Object.getPrototypeOf(obj);
+            newInstance = Object.create(newProto);
+        }catch(e){
+            newInstance = {};
+        }
+
         for (var attr in obj){
             if (obj.hasOwnProperty(attr))
-                copy[attr] = CrossMan.Data.cloneObject(obj[attr]);
+                newInstance[attr] = CrossMan.Data.cloneObject(obj[attr]);
         }
-        return copy;
+
+        return newInstance;
     }
     throw new Error("Unable to copy obj! Its type isn't supported.");
 };
